@@ -1,0 +1,1935 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ProtoHub",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/healthz": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                },
+                "example": {
+                  "status": "ok"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_400",
+                    "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Local origin, host or client header rejected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_403",
+                    "message": "Local origin, host or client header rejected",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_404",
+                    "message": "Resource not found",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "State conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_409",
+                    "message": "State conflict",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_503",
+                    "message": "Dependency unavailable",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/readyz": {
+      "get": {
+        "summary": "Ready",
+        "operationId": "ready",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                },
+                "example": {
+                  "status": "ok"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_400",
+                    "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Local origin, host or client header rejected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_403",
+                    "message": "Local origin, host or client header rejected",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_404",
+                    "message": "Resource not found",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "State conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_409",
+                    "message": "State conflict",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_503",
+                    "message": "Dependency unavailable",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/system": {
+      "get": {
+        "summary": "System",
+        "operationId": "system",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemInfo"
+                },
+                "example": {
+                  "runtime_mode": "mock",
+                  "auth_mode": "local-dev",
+                  "constraints": [
+                    "Trusted templates only",
+                    "Mock runtime does not start applications"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_400",
+                    "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Local origin, host or client header rejected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_403",
+                    "message": "Local origin, host or client header rejected",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_404",
+                    "message": "Resource not found",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "State conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_409",
+                    "message": "State conflict",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_503",
+                    "message": "Dependency unavailable",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/templates": {
+      "get": {
+        "summary": "Templates",
+        "operationId": "templates",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateList"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "hello-web",
+                      "name": "Hello Web",
+                      "description": "Trusted local HTTP sample"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_400",
+                    "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Local origin, host or client header rejected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_403",
+                    "message": "Local origin, host or client header rejected",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_404",
+                    "message": "Resource not found",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "State conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_409",
+                    "message": "State conflict",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_503",
+                    "message": "Dependency unavailable",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sandboxes": {
+      "get": {
+        "summary": "List Sandboxes",
+        "operationId": "list_sandboxes",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SandboxList"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "00000000-0000-4000-8000-000000000001",
+                      "name": "Example app",
+                      "template_id": "hello-web",
+                      "desired_state": "stopped",
+                      "status": "stopped",
+                      "generation": 0,
+                      "created_at": "2026-10-30T00:00:00Z",
+                      "updated_at": "2026-10-30T00:00:00Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_400",
+                    "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Local origin, host or client header rejected",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_403",
+                    "message": "Local origin, host or client header rejected",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_404",
+                    "message": "Resource not found",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "State conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_409",
+                    "message": "State conflict",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_503",
+                    "message": "Dependency unavailable",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create Sandbox",
+        "operationId": "create_sandbox",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSandbox"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sandbox"
+                },
+                "example": {
+                  "id": "00000000-0000-4000-8000-000000000001",
+                  "name": "Example app",
+                  "template_id": "hello-web",
+                  "desired_state": "stopped",
+                  "status": "stopped",
+                  "generation": 0,
+                  "created_at": "2026-10-30T00:00:00Z",
+                  "updated_at": "2026-10-30T00:00:00Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_400",
+                    "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Local origin, host or client header rejected",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_403",
+                    "message": "Local origin, host or client header rejected",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_404",
+                    "message": "Resource not found",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "State conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_409",
+                    "message": "State conflict",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_503",
+                    "message": "Dependency unavailable",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-ProtoHub-Client",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "console"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/sandboxes/{sandbox_id}": {
+      "get": {
+        "summary": "Get Sandbox",
+        "operationId": "get_sandbox",
+        "parameters": [
+          {
+            "name": "sandbox_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Sandbox Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sandbox"
+                },
+                "example": {
+                  "id": "00000000-0000-4000-8000-000000000001",
+                  "name": "Example app",
+                  "template_id": "hello-web",
+                  "desired_state": "stopped",
+                  "status": "stopped",
+                  "generation": 0,
+                  "created_at": "2026-10-30T00:00:00Z",
+                  "updated_at": "2026-10-30T00:00:00Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_400",
+                    "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Local origin, host or client header rejected",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_403",
+                    "message": "Local origin, host or client header rejected",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_404",
+                    "message": "Resource not found",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "State conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_409",
+                    "message": "State conflict",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_503",
+                    "message": "Dependency unavailable",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Sandbox",
+        "operationId": "delete_sandbox",
+        "parameters": [
+          {
+            "name": "sandbox_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Sandbox Id"
+            }
+          },
+          {
+            "name": "X-ProtoHub-Client",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "console"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Operation"
+                },
+                "example": {
+                  "id": "00000000-0000-4000-8000-000000000002",
+                  "sandbox_id": "00000000-0000-4000-8000-000000000001",
+                  "action": "delete",
+                  "generation": 1,
+                  "status": "queued",
+                  "attempt_count": 0,
+                  "created_at": "2026-10-30T00:00:00Z",
+                  "updated_at": "2026-10-30T00:00:00Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_400",
+                    "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Local origin, host or client header rejected",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_403",
+                    "message": "Local origin, host or client header rejected",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_404",
+                    "message": "Resource not found",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "State conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_409",
+                    "message": "State conflict",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_503",
+                    "message": "Dependency unavailable",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sandboxes/{sandbox_id}/start": {
+      "post": {
+        "summary": "Start Sandbox",
+        "operationId": "start_sandbox",
+        "parameters": [
+          {
+            "name": "sandbox_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Sandbox Id"
+            }
+          },
+          {
+            "name": "X-ProtoHub-Client",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "console"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Operation"
+                },
+                "example": {
+                  "id": "00000000-0000-4000-8000-000000000002",
+                  "sandbox_id": "00000000-0000-4000-8000-000000000001",
+                  "action": "start",
+                  "generation": 1,
+                  "status": "queued",
+                  "attempt_count": 0,
+                  "created_at": "2026-10-30T00:00:00Z",
+                  "updated_at": "2026-10-30T00:00:00Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_400",
+                    "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Local origin, host or client header rejected",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_403",
+                    "message": "Local origin, host or client header rejected",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_404",
+                    "message": "Resource not found",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "State conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_409",
+                    "message": "State conflict",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_503",
+                    "message": "Dependency unavailable",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sandboxes/{sandbox_id}/stop": {
+      "post": {
+        "summary": "Stop Sandbox",
+        "operationId": "stop_sandbox",
+        "parameters": [
+          {
+            "name": "sandbox_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Sandbox Id"
+            }
+          },
+          {
+            "name": "X-ProtoHub-Client",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "console"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Operation"
+                },
+                "example": {
+                  "id": "00000000-0000-4000-8000-000000000002",
+                  "sandbox_id": "00000000-0000-4000-8000-000000000001",
+                  "action": "stop",
+                  "generation": 1,
+                  "status": "queued",
+                  "attempt_count": 0,
+                  "created_at": "2026-10-30T00:00:00Z",
+                  "updated_at": "2026-10-30T00:00:00Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_400",
+                    "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Local origin, host or client header rejected",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_403",
+                    "message": "Local origin, host or client header rejected",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_404",
+                    "message": "Resource not found",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "State conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_409",
+                    "message": "State conflict",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_503",
+                    "message": "Dependency unavailable",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/operations/{operation_id}": {
+      "get": {
+        "summary": "Get Operation",
+        "operationId": "get_operation",
+        "parameters": [
+          {
+            "name": "operation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Operation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Operation"
+                },
+                "example": {
+                  "id": "00000000-0000-4000-8000-000000000002",
+                  "sandbox_id": "00000000-0000-4000-8000-000000000001",
+                  "action": "start",
+                  "generation": 1,
+                  "status": "queued",
+                  "attempt_count": 0,
+                  "created_at": "2026-10-30T00:00:00Z",
+                  "updated_at": "2026-10-30T00:00:00Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_400",
+                    "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Local origin, host or client header rejected",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_403",
+                    "message": "Local origin, host or client header rejected",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_404",
+                    "message": "Resource not found",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "State conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_409",
+                    "message": "State conflict",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_503",
+                    "message": "Dependency unavailable",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Action": {
+        "type": "string",
+        "enum": [
+          "start",
+          "stop",
+          "delete"
+        ],
+        "title": "Action"
+      },
+      "CreateSandbox": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": ".*\\S.*",
+            "title": "Name"
+          },
+          "template_id": {
+            "type": "string",
+            "const": "hello-web",
+            "title": "Template Id"
+          },
+          "ttl_seconds": {
+            "type": "integer",
+            "maximum": 3600.0,
+            "minimum": 60.0,
+            "title": "Ttl Seconds",
+            "default": 900
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "template_id"
+        ],
+        "title": "CreateSandbox"
+      },
+      "DesiredState": {
+        "type": "string",
+        "enum": [
+          "running",
+          "stopped",
+          "deleted"
+        ],
+        "title": "DesiredState"
+      },
+      "Error": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "Error"
+      },
+      "Health": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "ok",
+            "title": "Status",
+            "default": "ok"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "Health"
+      },
+      "HttpError": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/HttpErrorDetail"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "title": "HttpError"
+      },
+      "HttpErrorDetail": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "request_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Request Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "request_id"
+        ],
+        "title": "HttpErrorDetail"
+      },
+      "Operation": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "sandbox_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Sandbox Id"
+          },
+          "action": {
+            "$ref": "#/components/schemas/Action"
+          },
+          "generation": {
+            "type": "integer",
+            "title": "Generation"
+          },
+          "status": {
+            "$ref": "#/components/schemas/OperationStatus"
+          },
+          "attempt_count": {
+            "type": "integer",
+            "title": "Attempt Count"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Error"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "sandbox_id",
+          "action",
+          "generation",
+          "status",
+          "attempt_count",
+          "created_at",
+          "updated_at",
+          "error"
+        ],
+        "title": "Operation"
+      },
+      "OperationStatus": {
+        "type": "string",
+        "enum": [
+          "queued",
+          "running",
+          "succeeded",
+          "failed",
+          "superseded"
+        ],
+        "title": "OperationStatus"
+      },
+      "Sandbox": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "template_id": {
+            "type": "string",
+            "const": "hello-web",
+            "title": "Template Id"
+          },
+          "desired_state": {
+            "$ref": "#/components/schemas/DesiredState"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SandboxStatus"
+          },
+          "generation": {
+            "type": "integer",
+            "title": "Generation"
+          },
+          "active_operation_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Operation Id"
+          },
+          "preview_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preview Url"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Error"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "template_id",
+          "desired_state",
+          "status",
+          "generation",
+          "active_operation_id",
+          "preview_url",
+          "expires_at",
+          "created_at",
+          "updated_at",
+          "error"
+        ],
+        "title": "Sandbox"
+      },
+      "SandboxList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Sandbox"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "SandboxList"
+      },
+      "SandboxStatus": {
+        "type": "string",
+        "enum": [
+          "stopped",
+          "starting",
+          "running",
+          "stopping",
+          "deleting",
+          "deleted",
+          "failed"
+        ],
+        "title": "SandboxStatus"
+      },
+      "SystemInfo": {
+        "properties": {
+          "runtime_mode": {
+            "type": "string",
+            "enum": [
+              "mock",
+              "real-kind"
+            ],
+            "title": "Runtime Mode"
+          },
+          "auth_mode": {
+            "type": "string",
+            "const": "local-dev",
+            "title": "Auth Mode",
+            "default": "local-dev"
+          },
+          "constraints": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Constraints"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "runtime_mode",
+          "constraints"
+        ],
+        "title": "SystemInfo"
+      },
+      "Template": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "const": "hello-web",
+            "title": "Id",
+            "default": "hello-web"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "default": "Hello Web"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": "Trusted local HTTP sample"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "Template"
+      },
+      "TemplateList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Template"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "TemplateList"
+      }
+    }
+  }
+}

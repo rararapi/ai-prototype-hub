@@ -1,0 +1,8 @@
+{
+  "runtime_mode": "mock",
+  "auth_mode": "local-dev",
+  "constraints": [
+    "Trusted templates only",
+    "Mock runtime does not start applications"
+  ]
+}

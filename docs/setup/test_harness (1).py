@@ -1,0 +1,20 @@
+# Merge with existing rules; never overwrite unrelated entries.
+.harness/
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+.DS_Store

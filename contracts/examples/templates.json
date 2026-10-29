@@ -1,0 +1,9 @@
+{
+  "items": [
+    {
+      "id": "hello-web",
+      "name": "Hello Web",
+      "description": "Trusted local HTTP sample"
+    }
+  ]
+}
