@@ -63,8 +63,12 @@ def assert_junit(path: Path) -> None:
 
 
 def python() -> str:
-    path = SERVER / ".venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
-    if not path.exists():
+    configured = os.environ.get("UV_PROJECT_ENVIRONMENT")
+    environment = Path(configured) if configured else SERVER / ".venv"
+    if not environment.is_absolute():
+        environment = SERVER / environment
+    path = environment / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+    if not path.is_file():
         raise MissingPrerequisite("Run uv sync --locked --project apps/server before host checks")
     return str(path)
 
@@ -126,7 +130,7 @@ def host(gate: str, report: Path) -> None:
         )
         if not Path(bash).exists():
             raise MissingPrerequisite("Bash required for shell syntax validation")
-        scripts = sorted(ROOT.glob("scripts/**/*.sh"))
+        scripts = sorted([*ROOT.glob("scripts/**/*.sh"), *ROOT.glob(".devcontainer/*.sh")])
         if not scripts:
             raise AssertionError("No shell scripts found")
         for script in scripts:
@@ -264,6 +268,17 @@ def docker_gate(gate: str, report: Path) -> None:
         ]
     )
     if gate == "build":
+        child(
+            [
+                "docker",
+                "build",
+                "-f",
+                ".devcontainer/Dockerfile",
+                "-t",
+                "protohub/devcontainer:local",
+                ".",
+            ]
+        )
         child(
             ["docker", "compose", "-f", "compose.yaml", "build"],
             env={**os.environ, "PROTOHUB_OWNER_ID": "checks-build-only"},

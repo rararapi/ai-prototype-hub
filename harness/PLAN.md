@@ -52,6 +52,13 @@
 
 ## Final acceptance
 
+Dev Container follow-up: task `devcontainer-20261030` adds a non-root coding/check
+toolchain, three instance-specific dependency volumes, existing harness/skills integration,
+and CI using `make check-dev`. Runtime/Backend/Frontend split config, boundary tests and
+the operator guide; parent owns shared checks, CI and integration. No Docker socket,
+host kubeconfig, host permissions or OS settings are added. Actual CLI/host results are
+recorded in docs/DEV_CONTAINER.md; this does not clear the existing real-kind blocker.
+
 Final integrated make/check/full evidence follows in `.harness/reports/` and docs/VALIDATION.md.
 Real sample Pod/HTTP/lifecycle, real Playwright and live RBAC remain BLOCKED until cgroup v2.
 Do not mark full acceptance complete or convert these checks into mock passes.

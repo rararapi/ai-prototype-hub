@@ -85,6 +85,13 @@ PROTOHUB_MODE=real-kind PROTOHUB_CLUSTER_NAME=protohub-personal \
 
 ## 開発と検証
 
+開発ツールを揃える場合は、WSLのLinux側cloneをVS Codeで開き、
+**Dev Containers: Reopen in Container** を実行できます。
+Python/Node/uvとlockfileの依存を専用volumeへ用意し、non-rootで `make check-dev` を実行します。
+初回設定・停止・再構築は [Dev Container手順](docs/DEV_CONTAINER.md) を参照してください。
+アプリの `make up-mock` / `make up-real` と必須の `make verify` は、通常のWSLターミナルから実行します。
+開発コンテナにはDocker socketやkubeconfigを渡しません。
+
 この開発ハーネスには、タスクの目的・変更許可パス・担当・契約判断・修正予算を記録する
 workflowと、実際の検査runnerを含めます。範囲外変更、既存変更の上書き、古いPASSの流用、
 検証中のソース変更を検出し、必要な検査・独立レビューが揃わない完了を拒否します。

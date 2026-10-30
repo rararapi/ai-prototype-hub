@@ -40,6 +40,14 @@
       "contracts-host",
       "unit-host",
       "build-host"
+    ],
+    "dev": [
+      "harness-self",
+      "public-hygiene",
+      "source-host",
+      "contracts-host",
+      "unit-host",
+      "build-host"
     ]
   },
   "gates": [

@@ -1,0 +1,42 @@
+{
+  "name": "ProtoHub development tools",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/protohub,type=bind",
+  "workspaceFolder": "/workspaces/protohub",
+  "remoteUser": "developer",
+  "updateRemoteUserUID": true,
+  "overrideCommand": false,
+  "shutdownAction": "stopContainer",
+  "init": true,
+  "runArgs": ["--security-opt=no-new-privileges:true"],
+  "mounts": [
+    "source=protohub-${devcontainerId}-venv,target=/opt/protohub-venv,type=volume,volume-nocopy",
+    "source=protohub-${devcontainerId}-web-node-modules,target=/workspaces/protohub/apps/web/node_modules,type=volume,volume-nocopy",
+    "source=protohub-${devcontainerId}-e2e-node-modules,target=/workspaces/protohub/tests/e2e/node_modules,type=volume,volume-nocopy"
+  ],
+  "containerEnv": {
+    "UV_PROJECT_ENVIRONMENT": "/opt/protohub-venv",
+    "UV_PYTHON_DOWNLOADS": "never",
+    "UV_LINK_MODE": "copy",
+    "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD": "1"
+  },
+  "initializeCommand": [
+    "mkdir", "-p",
+    "${localWorkspaceFolder}/apps/web/node_modules",
+    "${localWorkspaceFolder}/tests/e2e/node_modules"
+  ],
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "forwardPorts": [],
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": "/opt/protohub-venv/bin/python",
+        "remote.autoForwardPorts": false,
+        "files.eol": "\n"
+      }
+    }
+  }
+}

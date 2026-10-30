@@ -1,6 +1,6 @@
 PYTHON ?= python3
 export WORKFLOW_ID
-.PHONY: doctor doctor-kind up-mock up-real check integration e2e security verify logs down reset-local skills-check workflow-check workflow-finish
+.PHONY: doctor doctor-kind up-mock up-real check check-dev integration e2e security verify logs down reset-local skills-check workflow-check workflow-finish
 doctor:
 	$(PYTHON) harness/doctor.py --mode compose
 doctor-kind:
@@ -11,6 +11,8 @@ up-real:
 	bash scripts/local/up-real.sh
 check:
 	$(PYTHON) harness/run.py --group quick
+check-dev:
+	$(PYTHON) harness/run.py --group dev
 integration:
 	$(PYTHON) harness/run.py --group integration
 e2e:

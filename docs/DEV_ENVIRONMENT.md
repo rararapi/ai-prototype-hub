@@ -50,3 +50,19 @@ CLIのkind binaryは公式SHA256SUMで確認します。固定値の取得と、
 
 依存更新はlockfileを更新し、互換性・契約・unit/buildと実runtimeの影響gateを再実行してください。
 LICENSEは元から存在せず、今回も未選定のままです。モデル名・有料API・組織固有設定は追加していません。
+
+## Dev Container
+
+`.devcontainer/Dockerfile` は検証imageと同じPython 3.11.18、Node 24.18.0のdigestとuv 0.11.19を
+使います。npmはNode image付属の11.16.0です。Git/make/gosu等はimage内だけへ導入し、
+実際の版を `/usr/local/share/protohub-toolchain.txt` に記録します。
+Python環境とNode依存はDev Containerごとに独立したnamed volumeへ配置します。
+
+設定・CLI実検証は [DEV_CONTAINER.md](DEV_CONTAINER.md) を参照してください。
+検証用CLIは公式npm package `@devcontainers/cli@0.90.0`（Node >=20）を一時directoryで使い、
+ホストへグローバル導入しません。CIは公式 `devcontainers/ci` のv0.3をcommit SHAで固定し、
+`push: never` / `inheritEnv: false` で `make check-dev` を実行します。
+アプリのfull gateは別jobの従来の `make verify` を維持します。
+
+- [Dev Containers CLI公式](https://github.com/devcontainers/cli)
+- [devcontainers/ci固定参照](https://github.com/devcontainers/ci/tree/513af61f4de4f75d37e4438f184ba4358f0fc1ca)

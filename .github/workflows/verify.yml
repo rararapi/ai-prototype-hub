@@ -9,6 +9,27 @@ concurrency:
   group: protohub-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  devcontainer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6, verified official tag
+        with:
+          persist-credentials: false
+      - name: Build and check the same development container
+        uses: devcontainers/ci@513af61f4de4f75d37e4438f184ba4358f0fc1ca # v0.3, verified official tag
+        with:
+          runCmd: make check-dev
+          push: never
+          inheritEnv: false
+      - name: Retain development-container evidence on failure
+        if: failure()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6, verified official tag
+        with:
+          name: protohub-devcontainer-failure-evidence
+          path: .harness/reports/
+          retention-days: 7
+          if-no-files-found: warn
   verify:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
