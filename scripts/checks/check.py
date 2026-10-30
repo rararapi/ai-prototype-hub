@@ -253,6 +253,10 @@ def docker_gate(gate: str, report: Path) -> None:
             "PROTOHUB_CHECK_EXECUTOR=host",
             "-e",
             "PROTOHUB_HARNESS_REPORT_DIR=/evidence",
+            "-e",
+            f"PROTOHUB_EVIDENCE_UID={os.getuid()}",
+            "-e",
+            f"PROTOHUB_EVIDENCE_GID={os.getgid()}",
             tag,
             "python3",
             "scripts/checks/check.py",
@@ -275,6 +279,19 @@ def docker_gate(gate: str, report: Path) -> None:
                 ".",
             ]
         )
+
+
+def preserve_evidence_owner(report: Path, uid: int, gid: int) -> None:
+    """Transfer only this new report subtree; never follow generated symlinks."""
+    if report.is_symlink():
+        raise AssertionError("Report root cannot be a symlink")
+    for path in [report, *report.rglob("*")]:
+        if path.is_symlink():
+            continue
+        if not path.resolve().is_relative_to(report.resolve()):
+            raise AssertionError("Evidence path escaped its report directory")
+        path.chmod(0o700 if path.is_dir() else 0o600)
+        os.chown(path, uid, gid, follow_symlinks=False)
 
 
 def main(argv=None) -> int:
@@ -328,6 +345,16 @@ def main(argv=None) -> int:
     except (AssertionError, OSError, ValueError) as exc:
         print(f"FAIL {args.gate}: {exc}")
         return 1
+    finally:
+        if (
+            os.name == "posix"
+            and os.geteuid() == 0
+            and os.environ.get("PROTOHUB_HARNESS_REPORT_DIR") == "/evidence"
+        ):
+            uid = os.environ.get("PROTOHUB_EVIDENCE_UID", "")
+            gid = os.environ.get("PROTOHUB_EVIDENCE_GID", "")
+            if uid.isdigit() and gid.isdigit() and int(uid) < 2**31 and int(gid) < 2**31:
+                preserve_evidence_owner(report, int(uid), int(gid))
     return 0
 
 

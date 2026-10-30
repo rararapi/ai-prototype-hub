@@ -3,6 +3,7 @@
 import importlib.util
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -15,6 +16,30 @@ spec.loader.exec_module(checks)
 
 
 class WrapperTests(unittest.TestCase):
+    def test_evidence_transfer_is_private_and_does_not_follow_symlinks(self):
+        with tempfile.TemporaryDirectory() as folder:
+            base = Path(folder)
+            report = base / "report"
+            nested = report / "unit"
+            nested.mkdir(parents=True)
+            result = nested / "result.xml"
+            result.write_text("synthetic evidence", encoding="utf-8")
+            outside = base / "outside.txt"
+            outside.write_text("unrelated", encoding="utf-8")
+            (report / "link").symlink_to(outside)
+            transferred = []
+            with patch.object(
+                checks.os,
+                "chown",
+                side_effect=lambda path, uid, gid, **kwargs: transferred.append(path),
+                create=True,
+            ):
+                checks.preserve_evidence_owner(report, 1000, 1000)
+            self.assertEqual(set(transferred), {report, nested, result})
+            self.assertEqual(result.stat().st_mode & 0o077, 0)
+            self.assertEqual(nested.stat().st_mode & 0o077, 0)
+            self.assertEqual(outside.read_text(), "unrelated")
+
     def test_minimum_python_can_read_docker_nanosecond_timestamp(self):
         root = Path(__file__).resolve().parents[2]
         script = "import runpy,sys; ns=runpy.run_path(sys.argv[1]); value=ns['parse_rfc3339']('2026-10-30T00:00:00.123456789Z'); assert value.microsecond==123456 and value.utcoffset().total_seconds()==0"
