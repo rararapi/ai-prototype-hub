@@ -64,6 +64,13 @@ clone/reopen/check baseline, tested Windows/WSL2 amd64 scope, untested other PCs
 and residual host/runtime and image-rebuild differences. This is a documentation-only
 clarification; it does not add runtime permissions or claim cross-PC acceptance.
 
+README illustrations: `readme-concept-images` uses the built-in image generation tool
+for concept/lifecycle and logical architecture assets in docs/images/. Parent owns
+the assets, prompts and README; Backend/Frontend independently review factual scope
+and image readability. Images explain the current trusted-template MVP, distinguish
+mock from real-kind, and do not claim product AI execution or runtime verification.
+Image/reference/hygiene checks and an independent review cover this documentation change.
+
 Final integrated make/check/full evidence follows in `.harness/reports/` and docs/VALIDATION.md.
 Real sample Pod/HTTP/lifecycle, real Playwright and live RBAC remain BLOCKED until cgroup v2.
 Do not mark full acceptance complete or convert these checks into mock passes.

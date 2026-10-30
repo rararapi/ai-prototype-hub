@@ -1,12 +1,43 @@
 # ProtoHub
 
-信頼済みサンプルを登録し、起動・停止・削除するlocalhost専用MVPです。
-React/TypeScript/Vite、FastAPI/Pydantic、PostgreSQL/SQLAlchemy/Alembicを使います。
-APIとworkerは別プロセスで動き、PostgreSQLのoperation queueと期限付きleaseで連携します。
-Redis、有料API、モデル接続は不要です。
+信頼済みの固定テンプレート `hello-web` を、管理画面から登録・起動・停止・削除する
+localhost専用MVPです。Kubernetesのコマンドを知らなくても、サンプルを起動して試せます。
+
+![ProtoHubのコンセプト。管理画面から個別のサンプルを登録し、起動、Ready後のURL操作、停止・削除へ進む。](docs/images/protohub-concept.png)
+
+*コンセプト図（生成イラスト）。実画面や検証結果のスクリーンショットではありません。*
+
+**登録 → 起動 → Ready → URLで操作 → 停止・再起動・削除** が基本の体験です。
+real-kindではPod readinessと実HTTP応答を確認してからReadyを表示します。
+アプリごとに実行資源を管理し、一方の停止・削除がもう一方に影響しない設計です。
+停止は再利用のために実行を止め、削除はそのアプリの実行資源を除去します。
+管理レコードはDBに保持します。
+
+v0は単一開発者・信頼済みサンプルが対象です。対話しながらアプリを作る製品内AIは
+[将来設計](docs/AI_DLC.md)として整理しています。開発者用のDevContainer・ハーネス・スキルは
+このMVPの開発環境に含まれます。
 
 実装・検証の到達点は [検証記録](docs/VALIDATION.md)、依存版は
 [DEV_ENVIRONMENT](docs/DEV_ENVIRONMENT.md) を参照してください。
+
+## しくみと実行モード
+
+![ProtoHubの論理構成。管理画面、API、PostgreSQLの操作キュー、別プロセスのWorker、RuntimeProviderを経て、mockまたはreal-kindへ処理を渡す。mockは実アプリを起動しない。](docs/images/protohub-architecture.png)
+
+*構成図（生成イラスト）。起動要求の論理的な流れを示します。real-kindでは管理用の
+web/API/worker/DB/previewもkind内に配置します。*
+
+APIは操作要求と管理データをPostgreSQLへ保存し、別プロセスのworkerが期限付きleaseで
+jobを取得して実行・観測します。管理データと操作キューはAPI/workerの再起動後も残ります。
+
+| モード | 基盤 | サンプルの挙動 |
+| --- | --- | --- |
+| `mock` | Docker Compose | 状態遷移を模擬。実アプリを起動せず、preview URLも発行しない |
+| `real-kind` | Docker上のkind | 実Podを起動し、Ready後にPreview経由でサンプルを操作する |
+
+UIはReact/TypeScript/Vite、APIはFastAPI/Pydantic、DBはPostgreSQL/SQLAlchemy/Alembicです。
+Redis、有料API、モデル接続は不要です。画像の生成方法・プロンプトは
+[画像の説明](docs/images/README.md)、機能・API・状態の正本は [MVP仕様](docs/MVP_SPEC.md) を参照してください。
 
 ## 初回起動（WSL2）
 
