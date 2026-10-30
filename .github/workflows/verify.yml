@@ -1,0 +1,43 @@
+name: ProtoHub local gates
+on:
+  pull_request:
+  push:
+    branches: [main, 'codex/**']
+permissions:
+  contents: read
+concurrency:
+  group: protohub-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6, verified official tag
+        with:
+          persist-credentials: false
+      - name: Install workspace-local kind and kubectl with checksum verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .harness/bin
+          cd .harness/bin
+          curl --fail --location --retry 3 -o kind-linux-amd64 https://kind.sigs.k8s.io/dl/v0.33.0/kind-linux-amd64
+          curl --fail --location --retry 3 -o kind.sha256sum https://kind.sigs.k8s.io/dl/v0.33.0/kind-linux-amd64.sha256sum
+          sha256sum --check kind.sha256sum
+          mv kind-linux-amd64 kind
+          curl --fail --location --retry 3 -o kubectl https://dl.k8s.io/release/v1.37.0/bin/linux/amd64/kubectl
+          curl --fail --location --retry 3 -o kubectl.sha256 https://dl.k8s.io/release/v1.37.0/bin/linux/amd64/kubectl.sha256
+          echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
+          chmod 755 kind kubectl
+          echo "$GITHUB_WORKSPACE/.harness/bin" >> "$GITHUB_PATH"
+      - name: Same required entry as local WSL
+        run: make verify
+      - name: Retain current-run evidence on failure
+        if: failure()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6, verified official tag
+        with:
+          name: protohub-failure-evidence
+          path: .harness/reports/
+          retention-days: 7
+          if-no-files-found: error
