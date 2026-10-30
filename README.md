@@ -1,17 +1,18 @@
 # ProtoHub
 
-信頼済みの固定テンプレート `hello-web` を、管理画面から登録・起動・停止・削除する
-localhost専用MVPです。Kubernetesのコマンドを知らなくても、サンプルを起動して試せます。
+サンプルアプリを画面で登録し、起動して、ブラウザで試せるローカルの管理ツールです。
+現在のv0は、信頼済みの固定テンプレート `hello-web` を扱うlocalhost専用MVPです。
 
-![ProtoHubのコンセプト。管理画面から個別のサンプルを登録し、起動、Ready後のURL操作、停止・削除へ進む。](docs/images/protohub-concept.png)
+![ProtoHubでできること。Hello WebをデモAとして登録し、起動中からReadyになるのを待ち、アプリを開いてHello ProtoHubのカウンターボタンを操作する。使った後はアプリごとに停止・起動・削除でき、デモAを止めてもデモBは動き続ける。](docs/images/protohub-concept.png)
 
-*コンセプト図（生成イラスト）。実画面や検証結果のスクリーンショットではありません。*
+*real-kindでの操作例を描いた生成イラストです。実画面・検証証跡ではありません。
+mockでは実サンプルを開けません。*
 
-**登録 → 起動 → Ready → URLで操作 → 停止・再起動・削除** が基本の体験です。
-real-kindではPod readinessと実HTTP応答を確認してからReadyを表示します。
-アプリごとに実行資源を管理し、一方の停止・削除がもう一方に影響しない設計です。
-停止は再利用のために実行を止め、削除はそのアプリの実行資源を除去します。
-管理レコードはDBに保持します。
+- **名前を付けて登録する**：Hello Webテンプレートから、自分のサンプルを管理画面に追加します。
+- **起動して実際に試す**：「起動」後、Readyになったら「アプリを開く」を押します。
+  サンプルの `Hello ProtoHub` では、ボタンを押すとクリック回数が変わります。
+- **アプリごとに管理する**：停止後も「起動」で再び使え、不要なら削除できます。
+  一方の操作がもう一方に影響しない設計です。管理レコードはDBに保持します。
 
 v0は単一開発者・信頼済みサンプルが対象です。対話しながらアプリを作る製品内AIは
 [将来設計](docs/AI_DLC.md)として整理しています。開発者用のDevContainer・ハーネス・スキルは
@@ -20,15 +21,47 @@ v0は単一開発者・信頼済みサンプルが対象です。対話しなが
 実装・検証の到達点は [検証記録](docs/VALIDATION.md)、依存版は
 [DEV_ENVIRONMENT](docs/DEV_ENVIRONMENT.md) を参照してください。
 
-## しくみと実行モード
+## エンジニア向け：構成と実行モード
 
-![ProtoHubの論理構成。管理画面、API、PostgreSQLの操作キュー、別プロセスのWorker、RuntimeProviderを経て、mockまたはreal-kindへ処理を渡す。mockは実アプリを起動しない。](docs/images/protohub-architecture.png)
+![real-kindの通信を3段で示す。管理操作はBrowserからnginx、FastAPI、PostgreSQLへ進む。非同期処理は同じDBとWorker、ServiceAccountを使うKubernetes API制御へ進む。サンプル操作のHTTPはBrowser、Preview、Service、Podの順。下部にkindのnamespace別配置、jobと状態、別構成のmock/Composeを示す。](docs/images/protohub-architecture.png)
 
-*構成図（生成イラスト）。起動要求の論理的な流れを示します。real-kindでは管理用の
-web/API/worker/DB/previewもkind内に配置します。*
+*構成図（生成イラスト）。[画像を開くと拡大できます](docs/images/protohub-architecture.png)。
+3段の通信経路でHTTP・DBアクセス・Kubernetes制御を区別し、下部に配置とjob制御を示しています。
+各段には同じコンポーネントを再掲しています。DBが複数ある構成ではありません。
+構成の説明であり、実kind検証の合格を示すものではありません。*
 
-APIは操作要求と管理データをPostgreSQLへ保存し、別プロセスのworkerが期限付きleaseで
-jobを取得して実行・観測します。管理データと操作キューはAPI/workerの再起動後も残ります。
+図内の `127.0.0.1` はホストのbind先です。ブラウザでは管理画面の
+`http://localhost:8080` とPreviewの `http://localhost:8081/apps/<UUID>/` を使います。
+管理画面のOriginは設定済みの `localhost` と一致させてください。
+
+real-kindでは、管理用コンポーネントもサンプルも専用kindクラスタ内で動きます。
+`protohub-system` と `protohub-samples` は管理範囲を分けるnamespaceです。
+悪性コードを隔離する境界としては扱いません。以下のportは既定値です。
+
+| 経路・役割 | 実装 |
+| --- | --- |
+| 管理画面とAPI | `127.0.0.1:8080` → NodePort `30080` → nginx。Reactの静的ファイルを配信し、`/api/*` を内部のFastAPI `:8000` へ転送 |
+| サンプル操作 | `127.0.0.1:8081/apps/<UUID>/` → NodePort `30081` → Preview `:8081` → 対象Service `:8080` → Pod `:8080`。PreviewはDBで現在の状態を確認し、固定ServiceへGET/HEADだけを転送 |
+| 永続化 | PostgreSQL `:5432` の `sandboxes` / `operations` / `audit_events`。`operations` 自体がjob queue。DBはDeploymentとPVC `protohub-db` を使い、API/workerの再起動後も記録を保持 |
+| 非同期処理 | APIは意図・generation・operationを同一transactionで登録し、`202` を返す。別プロセスのworkerが `FOR UPDATE SKIP LOCKED` でclaimし、実行・観測・reconcile・TTL停止を担当 |
+| 遅延結果の抑止 | lease owner/token、有効期限、active operation、generation、desired stateを照合して更新。古いworkerの遅れた結果が新しい停止・削除を覆さない |
+| Kubernetes制御 | WorkerのServiceAccount `protohub-worker` がサンプルnamespaceのDeployment/Serviceを操作し、Podは参照のみ。PodはDeployment配下のReplicaSet/controllerが生成・管理 |
+
+APIとPreviewはKubernetesの管理tokenを持たず、APIとDBはホストへ直接公開しません。
+PreviewはCookie/Authorizationを転送せず、任意のupstream URLを受け付けません。
+API・worker・Previewは共通Pythonパッケージを使う別プロセスです。
+Pod生成の標準的な制御関係は [KubernetesのDeployment解説](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) を参照してください。
+
+実装の参照先は [配置マニフェスト](infra/kubernetes/stack.yaml.in)、[RBAC](infra/kubernetes/rbac.yaml)、
+[job store](apps/server/src/protohub/persistence/jobs.py)、[RuntimeProvider実装](apps/server/src/protohub/runtime/kubernetes.py)、
+[Preview](apps/server/src/protohub/preview/__init__.py) です。
+
+| 操作・判定 | 実際の処理 |
+| --- | --- |
+| Ready | 現generationのDeployment rollout・Pod Ready・Serviceへの実 `GET /healthz` を確認。`202` やPod作成受付だけではReadyにしない |
+| 停止 | Deploymentのreplicasを0にし、Podの停止を待つ。Deployment・Service・管理レコードは保持し、Previewを無効化 |
+| 削除 | 対象のDeployment・Serviceを除去し、消失を確認。DBには墓標と監査記録を保持 |
+| 自動停止 | 起動成功から60〜3600秒（既定900秒）のTTLをworkerが計測し、期限で停止要求を登録 |
 
 | モード | 基盤 | サンプルの挙動 |
 | --- | --- | --- |

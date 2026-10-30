@@ -71,6 +71,13 @@ and image readability. Images explain the current trusted-template MVP, distingu
 mock from real-kind, and do not claim product AI execution or runtime verification.
 Image/reference/hygiene checks and an independent review cover this documentation change.
 
+Diagram revision: `readme-diagrams-v2` replaces the vague concept artwork with a
+three-panel registration/start/wait/open/click story and per-app lifecycle examples.
+The engineering diagram now covers real-kind namespaces, actual localhost/NodePort
+entrypoints, Preview traffic, PostgreSQL/PVC, scoped worker control and job fencing;
+mock remains a separate Compose alternative. Source/config audits by Backend and
+concrete sample UI/design audit by Frontend inform generation and final review.
+
 Final integrated make/check/full evidence follows in `.harness/reports/` and docs/VALIDATION.md.
 Real sample Pod/HTTP/lifecycle, real Playwright and live RBAC remain BLOCKED until cgroup v2.
 Do not mark full acceptance complete or convert these checks into mock passes.
