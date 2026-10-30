@@ -1,0 +1,77 @@
+name: ${COMPOSE_PROJECT_NAME:-protohub-local}
+x-server: &server
+  image: protohub/server:dev
+  build:
+    context: .
+    dockerfile: infra/docker/server.Dockerfile
+    target: runtime
+  read_only: true
+  tmpfs: [/tmp:rw,noexec,nosuid,size=16m]
+  security_opt: [no-new-privileges:true]
+  cap_drop: [ALL]
+  labels:
+    protohub.io/owner: ${PROTOHUB_OWNER_ID:?use scripts/local/up-mock.sh}
+x-environment: &environment
+  PROTOHUB_DATABASE_URL: postgresql+psycopg://protohub:local-dev@db/protohub
+  PROTOHUB_RUNTIME_MODE: mock
+  PROTOHUB_CONSOLE_ORIGIN: http://localhost:${PROTOHUB_CONSOLE_PORT:-8080}
+  PROTOHUB_PREVIEW_ORIGIN: http://localhost:${PROTOHUB_PREVIEW_PORT:-8081}
+  PROTOHUB_ALLOWED_HOSTS: '["localhost","127.0.0.1"]'
+services:
+  db:
+    image: postgres:17.11-bookworm@sha256:839fbb5a4942a7758dd93e18b42ea5649807491a0545b5eeeb8f0b8bb11857a5
+    environment:
+      POSTGRES_USER: protohub
+      POSTGRES_PASSWORD: local-dev
+      POSTGRES_DB: protohub
+    volumes: [database:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U protohub -d protohub]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    labels:
+      protohub.io/owner: ${PROTOHUB_OWNER_ID:?use scripts/local/up-mock.sh}
+  migrate:
+    <<: *server
+    environment: *environment
+    command: [alembic, -c, /app/alembic.ini, upgrade, head]
+    depends_on:
+      db: {condition: service_healthy}
+    restart: 'no'
+  api:
+    <<: *server
+    environment: *environment
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen(urllib.request.Request('http://127.0.0.1:8000/readyz',headers={'Host':'localhost'}),timeout=2)"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+  worker:
+    <<: *server
+    environment: *environment
+    command: [python, -m, protohub.worker]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+  web:
+    image: protohub/web:dev
+    build: {context: ., dockerfile: infra/docker/web.Dockerfile}
+    read_only: true
+    tmpfs: [/tmp:rw,noexec,nosuid,size=16m]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    ports: ['127.0.0.1:${PROTOHUB_CONSOLE_PORT:-8080}:8080']
+    depends_on:
+      api: {condition: service_healthy}
+    labels:
+      protohub.io/owner: ${PROTOHUB_OWNER_ID:?use scripts/local/up-mock.sh}
+volumes:
+  database:
+    labels:
+      protohub.io/owner: ${PROTOHUB_OWNER_ID:?use scripts/local/up-mock.sh}
+networks:
+  default:
+    labels:
+      protohub.io/owner: ${PROTOHUB_OWNER_ID:?use scripts/local/up-mock.sh}

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: protohub-system
+  labels:
+    app.kubernetes.io/managed-by: protohub
+    protohub.io/owner: ${OWNER_ID}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: protohub-samples
+  labels:
+    app.kubernetes.io/managed-by: protohub
+    protohub.io/owner: ${OWNER_ID}
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: v1.37

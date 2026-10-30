@@ -1,0 +1,181 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: protohub-config
+  namespace: protohub-system
+  labels: {app.kubernetes.io/managed-by: protohub}
+data:
+  PROTOHUB_DATABASE_URL: postgresql+psycopg://protohub:local-dev@db/protohub
+  PROTOHUB_RUNTIME_MODE: real-kind
+  PROTOHUB_CONSOLE_ORIGIN: http://localhost:${CONSOLE_PORT}
+  PROTOHUB_PREVIEW_ORIGIN: http://localhost:${PREVIEW_PORT}
+  PROTOHUB_ALLOWED_HOSTS: '["localhost","127.0.0.1"]'
+  PROTOHUB_SAMPLE_NAMESPACE: protohub-samples
+  PROTOHUB_SAMPLE_IMAGE: protohub/hello-web:${BUILD_TAG}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: protohub-db
+  namespace: protohub-system
+  labels: {app.kubernetes.io/managed-by: protohub}
+spec:
+  accessModes: [ReadWriteOnce]
+  resources: {requests: {storage: 1Gi}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db
+  namespace: protohub-system
+  labels: {app.kubernetes.io/managed-by: protohub}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: protohub-db}}
+  strategy: {type: Recreate}
+  template:
+    metadata: {labels: {app: protohub-db, app.kubernetes.io/managed-by: protohub}}
+    spec:
+      automountServiceAccountToken: false
+      securityContext: {runAsNonRoot: true, runAsUser: 999, runAsGroup: 999, fsGroup: 999, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: postgres
+          image: postgres:17.11-bookworm@sha256:839fbb5a4942a7758dd93e18b42ea5649807491a0545b5eeeb8f0b8bb11857a5
+          env:
+            - {name: POSTGRES_USER, value: protohub}
+            - {name: POSTGRES_PASSWORD, value: local-dev}
+            - {name: POSTGRES_DB, value: protohub}
+            - {name: PGDATA, value: /var/lib/postgresql/data/pgdata}
+          ports: [{containerPort: 5432}]
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+          resources: {requests: {cpu: 100m, memory: 128Mi}, limits: {cpu: 500m, memory: 512Mi}}
+          readinessProbe: {exec: {command: [pg_isready, -U, protohub, -d, protohub]}, periodSeconds: 2}
+          volumeMounts: [{name: database, mountPath: /var/lib/postgresql/data}]
+      volumes: [{name: database, persistentVolumeClaim: {claimName: protohub-db}}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: db, namespace: protohub-system, labels: {app.kubernetes.io/managed-by: protohub}}
+spec: {selector: {app: protohub-db}, ports: [{port: 5432, targetPort: 5432}]}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: api, namespace: protohub-system, labels: {app.kubernetes.io/managed-by: protohub}}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: protohub-api}}
+  template:
+    metadata: {labels: {app: protohub-api, app.kubernetes.io/managed-by: protohub}}
+    spec:
+      automountServiceAccountToken: false
+      securityContext: {runAsNonRoot: true, runAsUser: 10001, seccompProfile: {type: RuntimeDefault}}
+      initContainers:
+        - name: migrate
+          image: protohub/server:${BUILD_TAG}
+          imagePullPolicy: IfNotPresent
+          command: [alembic, -c, /app/alembic.ini, upgrade, head]
+          envFrom: [{configMapRef: {name: protohub-config}}]
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}, readOnlyRootFilesystem: true}
+          volumeMounts: [{name: tmp, mountPath: /tmp}]
+      containers:
+        - name: api
+          image: protohub/server:${BUILD_TAG}
+          imagePullPolicy: IfNotPresent
+          envFrom: [{configMapRef: {name: protohub-config}}]
+          ports: [{containerPort: 8000}]
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}, readOnlyRootFilesystem: true}
+          resources: {requests: {cpu: 50m, memory: 96Mi}, limits: {cpu: 500m, memory: 256Mi}}
+          readinessProbe:
+            httpGet: {path: /readyz, port: 8000, httpHeaders: [{name: Host, value: localhost}]}
+            periodSeconds: 2
+          livenessProbe:
+            httpGet: {path: /healthz, port: 8000, httpHeaders: [{name: Host, value: localhost}]}
+            periodSeconds: 10
+          volumeMounts: [{name: tmp, mountPath: /tmp}]
+      volumes: [{name: tmp, emptyDir: {sizeLimit: 16Mi}}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: api, namespace: protohub-system, labels: {app.kubernetes.io/managed-by: protohub}}
+spec: {selector: {app: protohub-api}, ports: [{port: 8000, targetPort: 8000}]}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: worker, namespace: protohub-system, labels: {app.kubernetes.io/managed-by: protohub}}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: protohub-worker}}
+  template:
+    metadata: {labels: {app: protohub-worker, app.kubernetes.io/managed-by: protohub}}
+    spec:
+      serviceAccountName: protohub-worker
+      automountServiceAccountToken: true
+      securityContext: {runAsNonRoot: true, runAsUser: 10001, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: worker
+          image: protohub/server:${BUILD_TAG}
+          imagePullPolicy: IfNotPresent
+          command: [python, -m, protohub.worker]
+          envFrom: [{configMapRef: {name: protohub-config}}]
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}, readOnlyRootFilesystem: true}
+          resources: {requests: {cpu: 50m, memory: 96Mi}, limits: {cpu: 500m, memory: 256Mi}}
+          volumeMounts: [{name: tmp, mountPath: /tmp}]
+      volumes: [{name: tmp, emptyDir: {sizeLimit: 16Mi}}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: preview, namespace: protohub-system, labels: {app.kubernetes.io/managed-by: protohub}}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: protohub-preview}}
+  template:
+    metadata: {labels: {app: protohub-preview, app.kubernetes.io/managed-by: protohub}}
+    spec:
+      automountServiceAccountToken: false
+      securityContext: {runAsNonRoot: true, runAsUser: 10001, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: preview
+          image: protohub/server:${BUILD_TAG}
+          imagePullPolicy: IfNotPresent
+          command: [python, -m, protohub.preview]
+          envFrom: [{configMapRef: {name: protohub-config}}]
+          ports: [{containerPort: 8081}]
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}, readOnlyRootFilesystem: true}
+          resources: {requests: {cpu: 25m, memory: 64Mi}, limits: {cpu: 250m, memory: 192Mi}}
+          readinessProbe:
+            httpGet: {path: /healthz, port: 8081, httpHeaders: [{name: Host, value: localhost}]}
+          volumeMounts: [{name: tmp, mountPath: /tmp}]
+      volumes: [{name: tmp, emptyDir: {sizeLimit: 16Mi}}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: preview, namespace: protohub-system, labels: {app.kubernetes.io/managed-by: protohub}}
+spec: {type: NodePort, selector: {app: protohub-preview}, ports: [{port: 8081, targetPort: 8081, nodePort: 30081}]}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: web, namespace: protohub-system, labels: {app.kubernetes.io/managed-by: protohub}}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: protohub-web}}
+  template:
+    metadata: {labels: {app: protohub-web, app.kubernetes.io/managed-by: protohub}}
+    spec:
+      automountServiceAccountToken: false
+      securityContext: {runAsNonRoot: true, runAsUser: 101, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: web
+          image: protohub/web:${BUILD_TAG}
+          imagePullPolicy: IfNotPresent
+          ports: [{containerPort: 8080}]
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}, readOnlyRootFilesystem: true}
+          resources: {requests: {cpu: 25m, memory: 32Mi}, limits: {cpu: 250m, memory: 96Mi}}
+          readinessProbe:
+            httpGet: {path: /healthz, port: 8080, httpHeaders: [{name: Host, value: localhost}]}
+          volumeMounts: [{name: tmp, mountPath: /tmp}]
+      volumes: [{name: tmp, emptyDir: {sizeLimit: 16Mi}}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: web, namespace: protohub-system, labels: {app.kubernetes.io/managed-by: protohub}}
+spec: {type: NodePort, selector: {app: protohub-web}, ports: [{port: 8080, targetPort: 8080, nodePort: 30080}]}
