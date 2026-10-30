@@ -220,3 +220,8 @@ def test_mock_complete_never_exposes_preview(client, factory, settings):
     assert claim is not None and claim.action == Action.START
     assert jobs.complete(claim, Observation(SandboxStatus.RUNNING, "http://fake.invalid"))
     assert client.get(f"/api/v1/sandboxes/{sandbox['id']}").json()["preview_url"] is None
+
+
+@pytest.mark.parametrize("host", ["localhost#invalid", "localhost?invalid", "localhost:"])
+def test_host_must_be_a_bare_authority(client, host):
+    assert client.get("/api/v1/system", headers={"Host": host}).status_code == 403

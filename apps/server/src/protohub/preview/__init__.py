@@ -35,7 +35,14 @@ def create_app(
         try:
             parsed = urlsplit("http://" + host)
             allowed = parsed.hostname in settings.allowed_hosts and not parsed.username
-            allowed = allowed and not parsed.password and not parsed.path and not parsed.query
+            allowed = (
+                allowed
+                and not parsed.password
+                and not parsed.path
+                and not parsed.query
+                and not parsed.fragment
+                and not host.endswith(":")
+            )
             _ = parsed.port
         except ValueError:
             allowed = False

@@ -100,7 +100,7 @@ def host(gate: str, report: Path) -> None:
                 "ruff",
                 "check",
                 "harness",
-                "scripts/checks",
+                "scripts",
                 "tests/integration",
                 "tests/e2e",
             ]
@@ -113,7 +113,7 @@ def host(gate: str, report: Path) -> None:
                 "format",
                 "--check",
                 "harness",
-                "scripts/checks",
+                "scripts",
                 "tests/integration",
                 "tests/e2e",
             ]

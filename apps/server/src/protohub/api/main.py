@@ -43,7 +43,15 @@ def allowed_host(raw: str, hosts: list[str]) -> bool:
         parsed = urlsplit("//" + raw)
         # Accessing port also rejects invalid port syntax and range.
         _ = parsed.port
-        return parsed.hostname in hosts and not parsed.username and not parsed.password
+        return (
+            parsed.hostname in hosts
+            and not parsed.username
+            and not parsed.password
+            and not parsed.path
+            and not parsed.query
+            and not parsed.fragment
+            and not raw.endswith(":")
+        )
     except ValueError:
         return False
 

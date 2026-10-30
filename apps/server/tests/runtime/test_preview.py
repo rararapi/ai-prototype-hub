@@ -62,6 +62,13 @@ def test_unknown_host_methods_and_unsafe_paths_rejected(setup_preview):
     assert requests == []
 
 
+@pytest.mark.parametrize("host", ["localhost#invalid", "localhost?invalid", "localhost:"])
+def test_preview_rejects_malformed_host_authority(setup_preview, host):
+    client, sandbox, requests = setup_preview
+    assert client.get(f"/apps/{sandbox.id}/", headers={"Host": host}).status_code == 403
+    assert requests == []
+
+
 def test_mock_stopped_deleted_and_failed_have_no_route(setup_preview):
     client, sandbox, requests = setup_preview
     for status in (SandboxStatus.STOPPED, SandboxStatus.DELETED, SandboxStatus.FAILED):

@@ -195,3 +195,18 @@ def test_bootstrap_cannot_capture_an_older_node(cfg, monkeypatch):
     with pytest.raises(local.Blocked, match="not a fresh"):
         local.capture_created_node(cfg, "attempt")
     assert "node_id" not in local.existing_record(cfg)
+
+
+def test_test_fixture_up_does_not_change_developer_active_stack(cfg, monkeypatch):
+    previous = {**cfg, "name": "protohub-developer"}
+    local.save(local.STATE / "active.json", previous)
+    before = (local.STATE / "active.json").read_bytes()
+    cfg["mode"] = "mock"
+    monkeypatch.setenv("PROTOHUB_NO_ACTIVATE", "1")
+    monkeypatch.setattr(local, "preflight", lambda _: None)
+    monkeypatch.setattr(local, "verify_compose", lambda _: False)
+    monkeypatch.setattr(local, "free_ports", lambda _: None)
+    monkeypatch.setattr(local, "compose", lambda *_: "")
+    local.up(cfg)
+    assert (local.STATE / "active.json").read_bytes() == before
+    assert local.existing_record(cfg)["name"] == cfg["name"]

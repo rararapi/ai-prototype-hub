@@ -15,10 +15,22 @@
 
 ## Progress
 
-- Phase 0: contracts/types/ownership/environment prepared; dependency resolution in progress.
-- Phase 1: pending base contract commit.
-- Phase 2: pending integration.
-- Phase 3: real PostgreSQL/kind/browser evidence pending; environment checks BLOCKED.
+- Phase 0 complete: baseline `96256a5`, canonical OpenAPI/examples, DTOs, settings, provider,
+  JobStore/UnitOfWork, generation/lease token and bounded retry contracts. uv.lock resolved.
+- Phase 1 complete: A Backend, B Frontend, C Runtime worked in parallel; parent owned D QA.
+  Shared checkout Git/install/lock updates stayed with parent. Handoffs exist per role.
+- Phase 2 integrated in A→C→B→D order: `7f33fdc`, `38986b3`, `0d71c12`, `8d86814`.
+- Independent reviews completed by Frontend (Backend/Runtime) and Backend (QA). Fixed false
+  current-generation Ready, mutation fencing after lease loss, failed kind creation receipts,
+  build owner/context, checksum filename, fixture active selection and interruption cleanup.
+- Native portable run `20261030T001936Z-d32b14e8`: source/contract/unit/build/hygiene PASS;
+  Python 89 + Vitest 22 tests, no required skips. Harness WSL self-tests 42 PASS at that point.
+- Docker became available during verification. Original kubectl1.29 is too old for node1.37.
+  Temporary Linux validation copy and workspace-local make4.3/kind0.33/kubectl1.37 prepared;
+  kind/kubectl official checksums verified. No host OS configuration/install was performed.
+- Linux copy `/tmp/protohub-verification.qJtY8v/repo` at source `8d86814`: doctor-kind PASS;
+  actual Docker source/contract/unit gates PASS, build running. New hardening fixes follow.
+- Phase 3 in progress: real PostgreSQL, mock lifecycle and kind/browser checks next.
 
 ## Final acceptance
 

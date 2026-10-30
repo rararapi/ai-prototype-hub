@@ -2,6 +2,7 @@
 
 import importlib.util
 import subprocess
+import sys
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -14,6 +15,18 @@ spec.loader.exec_module(checks)
 
 
 class WrapperTests(unittest.TestCase):
+    def test_cli_helpers_import_with_the_harness_interpreter(self):
+        root = Path(__file__).resolve().parents[2]
+        for path in ("scripts/local/manage.py", "scripts/checks/check.py"):
+            result = subprocess.run(
+                [sys.executable, str(root / path), "--help"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_build_supplies_owner_and_repository_root_context(self):
         calls = []
         with (

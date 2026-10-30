@@ -13,7 +13,7 @@ import string
 import subprocess
 import sys
 import time
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
@@ -260,7 +260,11 @@ def create_kind(cfg: dict, cluster: Path) -> None:
     receipt = uuid4().hex
     save(
         record_path(cfg),
-        {**cfg, "creation_receipt": receipt, "creation_started_at": datetime.now(UTC).isoformat()},
+        {
+            **cfg,
+            "creation_receipt": receipt,
+            "creation_started_at": datetime.now(timezone.utc).isoformat(),
+        },
     )
     try:
         run(
