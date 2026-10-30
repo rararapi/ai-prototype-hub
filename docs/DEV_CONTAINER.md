@@ -24,6 +24,9 @@ DevContainerを開いただけでlockfileを更新しません。
 
 開発者のターミナルはnon-rootユーザーで動かします。Linux上のUID/GID同期を使い、
 ソースのbind mountにroot所有の編集ファイルを増やさない構成です。
+WSL側も通常のnon-rootユーザーで開き、そのユーザーがcloneへ書き込めることが前提です。
+rootから開いたcloneや他ユーザー所有のソースを、UID同期で修復する仕組みではありません。
+entrypointが所有者を調整する対象は、下記の依存volume3個だけです。
 これはコンテナ内ユーザーの調整で、ホストユーザーのグループやsudo権限を変える操作ではありません。
 [公式のnon-root/UID同期の説明](https://code.visualstudio.com/remote/advancedcontainers/add-nonroot-user)
 
@@ -38,7 +41,8 @@ Python環境はproject内の既存 `.venv` を使わず、`UV_PROJECT_ENVIRONMEN
 | `/workspaces/protohub/tests/e2e/node_modules` | `protohub-${devcontainerId}-e2e-node-modules` |
 
 ソースは同じWSL cloneを編集し、Linux用の依存をWindows用の生成物と混ぜません。
-作成時のhelperはuvとnpmのlockfileを同期し、`make skills-check` を実行します。
+新規作成・再作成時のhelperはuvとnpmのlockfileを同期し、`make skills-check` を実行します。
+既存コンテナを再開するたびには実行しないため、lockfile変更後は明示的に再同期します。
 ホスト側に作るのはNode依存のmount先となる空のdirectoryだけで、Windows側の依存内容を
 コピーしません。依存volumeは通常の停止・再構築で消さず、必要なlockfileとの差分を同期します。
 [named volumeの公式説明](https://code.visualstudio.com/remote/advancedcontainers/improve-performance#_use-a-targeted-named-volume)
@@ -83,7 +87,7 @@ make skills-check
 make check-dev
 ```
 
-`make check-dev` は、開発コンテナ内のツールでharness自己検査、スキル整合性、
+`make check-dev` は、開発コンテナ内のツールでharness自己検査、public-hygiene、スキル整合性、
 lint/型検査、unit、OpenAPI/生成型の一致、Python package/frontend buildを実行する
 明示的な検証入口です。各検査は既存のhost executorを使います。
 この結果は開発ツールとコードの検証であり、Docker image build、実PostgreSQL、
@@ -92,8 +96,7 @@ lint/型検査、unit、OpenAPI/生成型の一致、Python package/frontend bui
 依存lockの変更を取り込んだ後は、コンテナ内で再同期できます。
 
 ```bash
-uv sync --project apps/server --locked
-npm ci --prefix apps/web
+bash .devcontainer/post-create.sh
 make check-dev
 ```
 
@@ -192,11 +195,26 @@ cgroup版は切り替わりません。今回確認したDocker daemonはcgroup 
 
 ## この構成自体の検証状況
 
-この文書の初稿時点では、DevContainer CLIによるbuild/up/execと、VS Codeの実際の
-Reopen操作は検証待ちです。設定の存在、static検査、既存コンテナでの検査成功だけをもって
-DevContainerの起動成功とは記録しません。親担当が実行したコマンド・source SHA・
-PASS/FAIL/BLOCKED・今回のreport pathを [VALIDATION.md](VALIDATION.md) へ確定します。
+2026-10-30、既存のWSL2 Ubuntu / Dockerで、公式Dev Container CLI 0.90.0を使って実検証しました。
+設定の初回実装commitは `6d23869`。この後のCI事前検査・CLI固定と文書修正を含む最終sourceと
+再検査reportの対応は、ignoredな `.harness/reports/devcontainer-20261030/final-evidence.json` に記録します。
 
-最低限、image build、non-root terminal、ソースと依存volumeへの書き込み、固定ツール版、
-lockfile同期、`make check-dev`、socket/kubeconfigが渡っていないこと、停止・再開・再構築時の
-volume保持を確認します。VS Codeでの対話的Reopenを未確認なら、CLI検証とは別項目で残します。
+| 実行・確認 | 結果 |
+| --- | --- |
+| CLI `read-configuration` / `up` | PASS。実際にimageをbuildし、3つの空volumeへuv/npm依存を導入 |
+| CLI `exec` でUID・権限・版・書き込み検査 | PASS。UID/GID 1000、実効capabilities 0、no-new-privileges、ソース/依存volumeへの書き込み |
+| Docker socket / Docker CLI / kubeconfig | いずれも未付与。inspectでもworkspace以外のhost bind・privileged・host network・公開portなし |
+| コンテナ内 `make check-dev` | PASS。初回report `20261030T013845Z-ea846249`、必須skipなし |
+| 停止→CLI `up` | PASS。同じcontainerとvolumeを再開 |
+| その検証containerだけ削除→CLI `up` | PASS。別containerを作り、同じ3volumeとfixtureの保持を確認、lockfile同期も再実行 |
+| UID移行中断の再現 | PASS。volume rootの所有が正しくても、root所有の子を再開時に修復 |
+| volume内symlinkの対象 | PASS。対象の所有を変更せず、linkだけを修復 |
+| 必須volumeなしでimage起動 | PASS。所有変更前に起動を拒否 |
+| 独立レビュー | CIのbuildx不足時の成功扱い・浮動CLI版を指摘し、事前検査とCLI 0.90.0固定で修正 |
+| VS Codeの画面で対話的Reopen / GitHub CIの実行 | NOT_RUN。CLI実測と別に扱う。push/PRは行っていない |
+| real-kind / 実Pod・HTTP / Playwright / live RBAC | 引き続きBLOCKED。ホストのcgroup v1が原因 |
+
+CLIのstdout/stderr、権限probe、固定volume/所有containerのreceipt、再作成記録は
+`.harness/reports/devcontainer-20261030/` に集約します。通常のharness gateは各run IDの
+`report.json` とlog/JUnitを使います。これらはローカル証跡で、リポジトリへcommitしません。
+OS設定・ユーザーグループ・Dockerサービスは変更していません。

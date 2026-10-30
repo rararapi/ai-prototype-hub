@@ -60,7 +60,8 @@ Python環境とNode依存はDev Containerごとに独立したnamed volumeへ配
 
 設定・CLI実検証は [DEV_CONTAINER.md](DEV_CONTAINER.md) を参照してください。
 検証用CLIは公式npm package `@devcontainers/cli@0.90.0`（Node >=20）を一時directoryで使い、
-ホストへグローバル導入しません。CIは公式 `devcontainers/ci` のv0.3をcommit SHAで固定し、
+ホストへグローバル導入しません。CIも同じCLI版をrunner一時directoryへ導入し、
+buildxの存在を明示的に確認します。公式 `devcontainers/ci` のv0.3をcommit SHAで固定し、
 `push: never` / `inheritEnv: false` で `make check-dev` を実行します。
 アプリのfull gateは別jobの従来の `make verify` を維持します。
 

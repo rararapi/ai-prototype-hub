@@ -102,6 +102,7 @@ workflowと、実際の検査runnerを含めます。範囲外変更、既存変
 スキルはプロジェクト内 `.agents/skills/` に配置し、固定した出所・ライセンス・hashを検査します。
 
 ```bash
+# 以下はWSLホストの make check と組み合わせる例
 make skills-check
 python3 harness/workflow.py start --id ui-change \
   --objective '状態表示を改善する' --allow apps/web/ \
@@ -109,6 +110,10 @@ python3 harness/workflow.py start --id ui-change \
   --required-gate build --required-gate public-hygiene
 WORKFLOW_ID=ui-change make workflow-check
 ```
+
+Dev Container内のworkflowでは `source-host` / `contracts-host` / `unit-host` /
+`build-host` と `harness-self` / `public-hygiene` をrequired gateへ指定し、
+`make check-dev` の証跡を添付します。gate名はrunnerの実際のIDに合わせてください。
 
 AI-DLCの原則はこの開発工程に採用しています。将来の対話型アプリ制作の段階・状態・成果物・
 人の判断境界は [AI_DLC](docs/AI_DLC.md) に整理し、製品内のAI実行は次フェーズとして扱います。
