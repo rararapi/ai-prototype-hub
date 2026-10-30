@@ -13,13 +13,16 @@ Linuxコンテナと実起動の到達点は [VALIDATION](VALIDATION.md) に分�
 | SQLAlchemy / Alembic | 2.1.6 / 1.20.1 |
 | psycopg / Kubernetes Python client | 3.3.6 / 37.0.1 |
 | pytest / Ruff / mypy | 9.2.0 / 0.17.3 / 2.4.1 |
-| React / Vite / TypeScript | 19.3.1 / 8.3.5 / package-lock参照 |
+| React / Vite / TypeScript | 19.3.1 / 8.3.5 / 5.9.3 |
 | Vitest / openapi-typescript / Playwright | 5.0.5 / 7.13.0 / 1.64.1 |
 
 ハーネス・doctor・ローカルlauncherはPython 3.10以上の標準ライブラリで動きます。
 WSLはUbuntu 22.04.3 LTS / kernel 5.15.146.1、Docker server 25.0.3、
 Compose v2.24.6、buildx v0.12.1を確認しました。最初はDocker未接続でしたが検証中に接続可能となりました。
 ホストOSのサービス・権限・WSL設定は変更していません。
+Docker内のPython3.11.18/Node24.18.0でsource/contract/unit/buildを実行しました。
+Docker daemonのcgroup版は1で、Kubernetes1.37は起動を拒否します。real-kindはcgroup v2が前提です。
+最初のdoctor-kindではこの条件を見落としていたため、実失敗後に事前検出を実装・検査しました。
 
 | コンテナ/ツール | 採用した固定参照 |
 |---|---|

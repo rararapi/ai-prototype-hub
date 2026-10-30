@@ -24,6 +24,14 @@ contract, unit passed in current integration run; full real evidence is recorded
 in docs/VALIDATION.md and harness/PLAN.md after completion. Handoff results are not substitutes
 for the integrated source SHA's gates.
 
+Later integrated evidence: source94fdde0 actual Docker source/contract/unit/build/hygiene and
+four real PostgreSQL tests PASS. Kind failed on cgroupv1; doctor now blocks that prerequisite
+before creating resources. Mock actual lifecycle/Windows HTTP/DB stop-start persistence PASS
+after fixing tmpfs YAML. Python3.10 timestamp cleanup repaired; both known failed clusters were
+removed with exact-ID/receipt verification. New developer workflow + pinned skills integrated;
+72 stdlib self-tests PASS and independent synthetic forward-test complete. Final reports record
+the latest source identity; real Pod/HTTP/browser/live RBAC remain BLOCKED, never mocked green.
+
 ## Review repairs
 
 Compose build owner interpolation and hello-web build context fixed; termination grace waits

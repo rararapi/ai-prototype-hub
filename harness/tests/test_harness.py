@@ -26,6 +26,35 @@ DOCTOR_SPEC.loader.exec_module(doctor)
 
 
 class HarnessTests(unittest.TestCase):
+    def test_source_changes_cannot_pass_while_dirty_stays_true(self):
+        (self.root / ".gitignore").write_text(".harness/\n", encoding="utf-8")
+        (self.root / "owned.txt").write_text("before", encoding="utf-8")
+        for argv in (
+            ["git", "init", "-q"],
+            ["git", "add", ".gitignore", "owned.txt"],
+            [
+                "git",
+                "-c",
+                "user.name=Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit",
+                "-qm",
+                "fixture",
+            ],
+        ):
+            subprocess.run(argv, cwd=self.root, capture_output=True, check=True)
+        result = self.run_gates(
+            [self.gate(code="from pathlib import Path; Path('owned.txt').write_text('after')")]
+        )
+        self.assertEqual(result["gates"][0]["status"], "PASS")
+        self.assertEqual(result["status"], "FAIL")
+        self.assertTrue(result["git_snapshot"]["dirty"])
+        self.assertTrue(result["git_snapshot_after"]["dirty"])
+        self.assertNotEqual(
+            result["git_snapshot"]["fingerprint"], result["git_snapshot_after"]["fingerprint"]
+        )
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory(prefix="protohub-harness-test-")
         self.addCleanup(self.temporary.cleanup)

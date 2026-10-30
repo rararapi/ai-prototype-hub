@@ -17,6 +17,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from workflow import WorkflowError, snapshot  # noqa: E402
+
 MAX_LOG_BYTES = 1024 * 1024
 
 
@@ -294,6 +297,13 @@ def run(root: Path, group: str, manifest_path: str = "harness/gates.json") -> di
             git_sha=git["output"].strip() if git["status"] == "PASS" else None,
             git_dirty=bool(dirty["output"]) if dirty["status"] == "PASS" else None,
         )
+        report["git_snapshot"] = None
+        report["git_snapshot_after"] = None
+        if report["git_sha"] is not None:
+            try:
+                report["git_snapshot"] = snapshot(root)
+            except (WorkflowError, OSError, ValueError):
+                pass
         statuses = {}
         for gate in gates:
             started = time.monotonic()
@@ -353,6 +363,28 @@ def run(root: Path, group: str, manifest_path: str = "harness/gates.json") -> di
             if "BLOCKED" in statuses.values()
             else "PASS"
         )
+        if report["git_sha"] is not None:
+            try:
+                report["git_snapshot_after"] = snapshot(root)
+            except (WorkflowError, OSError, ValueError):
+                pass
+            before, after = report["git_snapshot"], report["git_snapshot_after"]
+            if (
+                before is None
+                or after is None
+                or before["fingerprint"] != after["fingerprint"]
+                or before["head"] != report["git_sha"]
+                or before["dirty"] != report["git_dirty"]
+            ):
+                report["status"] = "FAIL"
+                report["gates"].append(
+                    {
+                        "id": "source-consistency",
+                        "status": "FAIL",
+                        "returncode": None,
+                        "reason": "Source identity unavailable or changed while gates were running",
+                    }
+                )
         if interrupted:
             report.update(
                 interrupted=True,

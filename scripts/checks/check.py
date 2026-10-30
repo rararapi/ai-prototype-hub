@@ -87,6 +87,7 @@ def pytest(paths: list[str], report: Path, extra: list[str] | None = None, env=N
 def host(gate: str, report: Path) -> None:
     if gate == "source":
         py = python()
+        child([py, "scripts/checks/skills.py"])
         child([py, "-m", "ruff", "check", "src", "tests", "migrations"], SERVER)
         child(
             [py, "-m", "ruff", "format", "--check", "src", "tests", "migrations"],

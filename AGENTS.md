@@ -41,3 +41,24 @@ Build a local-first prototype hosting MVP: register a trusted sample, start it, 
 - Flag API/provider coupling, Docker socket mounts, unbounded retries, public default port binds, arbitrary upstream proxy targets, and secrets in source or logs.
 - Flag a full gate that passes while real-runtime tests are skipped, or an API contract that changed without coordinated updates and tests.
 - Require review of browser origin/cookie boundaries before enabling untrusted app content or authentication.
+
+## Agent development workflow and skills
+
+- For a meaningful implementation task, start or resume a scoped record with `harness/workflow.py`.
+  Read `docs/DEVELOPMENT_WORKFLOW.md` for exact commands and evidence formats. Routine steps
+  reuse the user's authorization; only material scope or safety-boundary changes need a decision.
+- Record allowed/forbidden paths, one owner per scope, relevant contracts and required gates.
+  Check actual changes after each unit. Preserve initial unrelated dirty files; never revert them
+  to make scope checks pass. Record bounded repair attempts and stop unchanged failure loops.
+- Verification and independent review must match the current HEAD and source fingerprint.
+  `workflow.py finish` refuses scope violations, failed/BLOCKED or stale evidence. This is
+  development assistance; the OS sandbox and approval controls remain the permission boundary.
+- Read `.agents/skills/protohub-development/SKILL.md` for ProtoHub implementation work. Use
+  frontend-design, applicable Vite/React best practices and web-design-guidelines for UI work;
+  use security-best-practices for requested security work. Do not load every skill by default.
+- Skill guidance does not authorize framework migrations, extra services, permission changes,
+  paid APIs or publication. Preserve the current visual system unless redesign is requested.
+  Skills are versioned with source/license/hash provenance in `harness/skills.lock.json`;
+  `make skills-check` detects unreviewed drift. Read `docs/SKILLS.md` for the selected set.
+- AI-DLC principles guide this development workflow. Product-internal conversational creation
+  remains a later design in `docs/AI_DLC.md`; v0 does not gain arbitrary AI/code execution.

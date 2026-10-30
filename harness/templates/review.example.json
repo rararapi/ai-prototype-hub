@@ -1,0 +1,10 @@
+{
+  "status": "NOT_REVIEWED",
+  "reviewer": "",
+  "independent": true,
+  "blocking_findings": null,
+  "summary": "",
+  "completed_at": null,
+  "git_snapshot": null,
+  "instructions": "An independent reviewer fills actual findings, UTC completion time and the output of workflow.py snapshot for the reviewed code. Only PASS with zero unresolved blocking findings is accepted."
+}

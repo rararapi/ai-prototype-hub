@@ -28,11 +28,31 @@
 - Docker became available during verification. Original kubectl1.29 is too old for node1.37.
   Temporary Linux validation copy and workspace-local make4.3/kind0.33/kubectl1.37 prepared;
   kind/kubectl official checksums verified. No host OS configuration/install was performed.
-- Linux copy `/tmp/protohub-verification.qJtY8v/repo` at source `8d86814`: doctor-kind PASS;
-  actual Docker source/contract/unit gates PASS, build running. New hardening fixes follow.
-- Phase 3 in progress: real PostgreSQL, mock lifecycle and kind/browser checks next.
+- Linux quick `20261030T001543Z-a4f5cdf2` at `8d86814`: all selected gates PASS, including
+  actual Docker builds. Full `20261030T002409Z-fe52d19a` at clean source `94fdde0` passed
+  source/contract/unit/build/hygiene and real PostgreSQL integration (4 tests, no skips).
+- Real kind bootstrap failed: Docker25.0.3 daemon uses cgroup v1; node1.37 kubelet refuses it.
+  Initial full report preserves actual FAIL for E2E/security. Doctor now detects this as
+  BLOCKED before resource creation. No cgroup override or host OS change was performed.
+- Real bootstrap also exposed Docker RFC3339 nanosecond parsing on Python3.10. Fixed and
+  tested at the minimum interpreter. Recovered the two known failed nodes using exact
+  observed container IDs + original receipts; verified cleanup, no foreign resources touched.
+- Mock actual startup exposed YAML tmpfs splitting; fixed in `0c331d5` with regression checks.
+  The isolated mock copy passed register/start/duplicate/stop/restart/delete, two-app independence,
+  Windows localhost HTTP, and full DB stop/start persistence. Its volume retention was observed;
+  the explicitly named test project and test volume were then reset.
+- User clarified developer harness + skills. Added scoped task CLI, baseline/ownership/contract
+  decisions, bounded repair, exact source snapshots, gate+independent review linkage, and
+  refusal of stale/missing/failed evidence. WSL harness self-tests: 72 PASS at this stage.
+- Added four pinned upstream skills + one local development skill, license notices/hash lock,
+  offline reference adaptation and source gate validation. Independent synthetic forward-test
+  exercised actual FAIL→repair→PASS→independent review→finish without routine approvals.
+- AI-DLC principles adopted for development; product conversational workflow is design-only
+  in docs/AI_DLC.md. No embedded AI, paid API/model choice or arbitrary-code execution added.
 
 ## Final acceptance
 
-PASS/FAIL/BLOCKED will be recorded from current-run evidence, never copied from handoffs.
+Final integrated make/check/full evidence follows in `.harness/reports/` and docs/VALIDATION.md.
+Real sample Pod/HTTP/lifecycle, real Playwright and live RBAC remain BLOCKED until cgroup v2.
+Do not mark full acceptance complete or convert these checks into mock passes.
 

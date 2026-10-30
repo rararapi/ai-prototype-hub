@@ -1,0 +1,4 @@
+interface:
+  display_name: "ProtoHub Development"
+  short_description: "Scoped implementation, review and verified local evidence"
+  default_prompt: "Use $protohub-development to implement a scoped ProtoHub change and verify its evidence."

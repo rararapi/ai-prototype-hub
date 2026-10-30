@@ -85,6 +85,27 @@ PROTOHUB_MODE=real-kind PROTOHUB_CLUSTER_NAME=protohub-personal \
 
 ## 開発と検証
 
+この開発ハーネスには、タスクの目的・変更許可パス・担当・契約判断・修正予算を記録する
+workflowと、実際の検査runnerを含めます。範囲外変更、既存変更の上書き、古いPASSの流用、
+検証中のソース変更を検出し、必要な検査・独立レビューが揃わない完了を拒否します。
+通常の工程ごとに承認を増やさず、OS・権限・課金・公開等の境界では既存の承認を守ります。
+これは開発支援であり、OS sandboxの代替ではありません。
+
+[開発ワークフロー](docs/DEVELOPMENT_WORKFLOW.md) と [導入スキル5件](docs/SKILLS.md) を参照してください。
+スキルはプロジェクト内 `.agents/skills/` に配置し、固定した出所・ライセンス・hashを検査します。
+
+```bash
+make skills-check
+python3 harness/workflow.py start --id ui-change \
+  --objective '状態表示を改善する' --allow apps/web/ \
+  --required-gate source --required-gate contracts --required-gate unit \
+  --required-gate build --required-gate public-hygiene
+WORKFLOW_ID=ui-change make workflow-check
+```
+
+AI-DLCの原則はこの開発工程に採用しています。将来の対話型アプリ制作の段階・状態・成果物・
+人の判断境界は [AI_DLC](docs/AI_DLC.md) に整理し、製品内のAI実行は次フェーズとして扱います。
+
 ```bash
 make check          # lint/type/unit/contract/build/public-hygiene + harness自己検査
 make integration    # 専用PostgreSQL fixtureでmigration/queue/並行性/復旧

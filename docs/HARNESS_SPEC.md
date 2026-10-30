@@ -6,6 +6,16 @@
 
 `AGENTS.md` は短い常設ルール、`CODEX_TASK.md` は今回の実行依頼、specは仕様の正本、`harness/PLAN.md` は進捗、scriptsは再現可能な検証、runnerは結果を記録する。
 
+実装したエージェント用workflowは `harness/workflow.py`。目的、変更許可/禁止パス、担当、
+契約判断、修正予算、検査・独立レビュー証跡をタスク単位に保持する。
+実Git差分と既存dirty変更を検査し、現在のsource snapshotと一致しない証跡では完了できない。
+詳細は [DEVELOPMENT_WORKFLOW.md](DEVELOPMENT_WORKFLOW.md)。テストrunnerだけをハーネスの
+全体とは扱わない。通常工程の承認は繰り返さず、既存の権限境界を守る。
+
+`.agents/skills/` の固定スキルはこの手順へ接続する。`make skills-check` は出所・license・hashを
+確認し、上流mainからの暗黙更新や未確認の実行helper混入を検出する。[SKILLS.md](SKILLS.md)参照。
+runnerは検証の前後に `git_snapshot` を記録し、HEAD・dirty内容のfingerprintが変わればFAILにする。
+
 ## 既にあるひな形
 
 - `harness/run.py`: 標準ライブラリだけで動く。manifestのgateを依存順に実行し、timeout、FAIL、BLOCKEDを記録する。
