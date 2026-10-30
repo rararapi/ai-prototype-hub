@@ -98,7 +98,7 @@ def test_kind_replaced_node_cannot_be_deleted_by_old_record(cfg, monkeypatch):
 
 
 def test_reset_requires_exact_name_before_destructive_calls(cfg, monkeypatch):
-    monkeypatch.setattr(local, "preflight", lambda _: None)
+    monkeypatch.setattr(local, "preflight", lambda _, **kwargs: None)
     monkeypatch.setattr(
         local, "run", lambda *_: pytest.fail("must not execute destructive command")
     )
@@ -107,7 +107,8 @@ def test_reset_requires_exact_name_before_destructive_calls(cfg, monkeypatch):
 
 
 def test_daily_kind_down_scales_only_owned_workloads_and_retains_pvc(cfg, monkeypatch):
-    monkeypatch.setattr(local, "preflight", lambda _: None)
+    operations = []
+    monkeypatch.setattr(local, "preflight", lambda _, **kwargs: operations.append(kwargs))
     monkeypatch.setattr(local, "verify_kind", lambda _: True)
     commands = []
     monkeypatch.setattr(local, "kube", lambda _cfg, *args: commands.append(args))
@@ -116,6 +117,7 @@ def test_daily_kind_down_scales_only_owned_workloads_and_retains_pvc(cfg, monkey
     assert all("scale" in argv and "--replicas=0" in argv for argv in commands)
     assert all("delete" not in argv and "persistentvolumeclaim" not in argv for argv in commands)
     assert "app.kubernetes.io/managed-by=protohub" in commands[-1]
+    assert operations == [{"operation": "cleanup"}]
 
 
 def test_rendered_kind_has_loopback_only_mappings_and_fixed_node_digest(cfg):
@@ -164,7 +166,7 @@ def test_create_timeout_preserves_fresh_identity_for_owned_reset(cfg, monkeypatc
     record = local.existing_record(cfg)
     assert record["node_id"] == "created-by-attempt"
     assert record["creation_receipt"] and record["bootstrap_state"] == "incomplete"
-    monkeypatch.setattr(local, "preflight", lambda _: None)
+    monkeypatch.setattr(local, "preflight", lambda _, **kwargs: None)
     monkeypatch.setenv("PROTOHUB_RESET_CONFIRM", cfg["name"])
 
     def unavailable_api(*args, **kwargs):
@@ -203,10 +205,82 @@ def test_test_fixture_up_does_not_change_developer_active_stack(cfg, monkeypatch
     before = (local.STATE / "active.json").read_bytes()
     cfg["mode"] = "mock"
     monkeypatch.setenv("PROTOHUB_NO_ACTIVATE", "1")
-    monkeypatch.setattr(local, "preflight", lambda _: None)
+    monkeypatch.setattr(local, "preflight", lambda _, **kwargs: None)
     monkeypatch.setattr(local, "verify_compose", lambda _: False)
     monkeypatch.setattr(local, "free_ports", lambda _: None)
     monkeypatch.setattr(local, "compose", lambda *_: "")
     local.up(cfg)
     assert (local.STATE / "active.json").read_bytes() == before
     assert local.existing_record(cfg)["name"] == cfg["name"]
+
+
+@pytest.mark.parametrize(
+    "value, microseconds, offset_hours",
+    [
+        ("2026-10-30T01:02:03.123456789Z", 123456, 0),
+        ("2026-10-30T10:02:03.987654321+09:00", 987654, 9),
+        ("2026-10-30T01:02:03.1-05:00", 100000, -5),
+        ("2026-10-30T01:02:03+00:00", 0, 0),
+    ],
+)
+def test_rfc3339_accepts_docker_nanoseconds_preserving_timezone(value, microseconds, offset_hours):
+    parsed = local.parse_rfc3339(value)
+    assert parsed.microsecond == microseconds
+    assert parsed.utcoffset() == timedelta(hours=offset_hours)
+
+
+def test_capture_accepts_nanoseconds_in_docker_and_receipt(cfg, monkeypatch):
+    local.save(
+        local.record_path(cfg),
+        {
+            **cfg,
+            "creation_receipt": "attempt",
+            "creation_started_at": "2026-10-30T00:00:00.123456789Z",
+        },
+    )
+    node = {
+        "Id": "fresh-nanosecond-node",
+        "Created": "2026-10-30T09:00:01.987654321+09:00",
+        "Config": {
+            "Labels": {"io.x-k8s.kind.cluster": cfg["name"], "io.x-k8s.kind.role": "control-plane"}
+        },
+    }
+    monkeypatch.setattr(local, "run", lambda *args: json.dumps([node]))
+    assert local.capture_created_node(cfg, "attempt")
+    assert local.existing_record(cfg)["node_id"] == "fresh-nanosecond-node"
+
+
+def test_preflight_forwards_operation_to_doctor(cfg, monkeypatch):
+    monkeypatch.setattr(local.sys, "platform", "linux")
+    monkeypatch.setattr(local, "ROOT", Path("/home/test/protohub"))
+    commands = []
+
+    def doctor(argv, **kwargs):
+        commands.append(argv)
+        return subprocess.CompletedProcess(argv, 0)
+
+    monkeypatch.setattr(local.subprocess, "run", doctor)
+    local.preflight("real-kind")
+    local.preflight("real-kind", operation="cleanup")
+    assert commands[0][-4:] == ["--mode", "kind", "--operation", "start"]
+    assert commands[1][-4:] == ["--mode", "kind", "--operation", "cleanup"]
+
+
+def test_reset_uses_cleanup_preflight_but_never_adopts_missing_node_identity(cfg, monkeypatch):
+    local.save(local.record_path(cfg), {**cfg, "creation_receipt": "old-attempt"})
+    operations = []
+    monkeypatch.setattr(local, "preflight", lambda _, **kwargs: operations.append(kwargs))
+    monkeypatch.setenv("PROTOHUB_RESET_CONFIRM", cfg["name"])
+    commands = []
+
+    def execute(argv, capture=False):
+        commands.append(argv)
+        if argv == ["kind", "get", "clusters"]:
+            return cfg["name"]
+        raise AssertionError("reset must not inspect/adopt/delete a node without recorded identity")
+
+    monkeypatch.setattr(local, "run", execute)
+    with pytest.raises(local.Blocked, match="no matching ownership"):
+        local.reset(cfg)
+    assert operations == [{"operation": "cleanup"}]
+    assert commands == [["kind", "get", "clusters"]]

@@ -112,7 +112,7 @@ def existing_record(cfg: dict) -> dict | None:
     return record
 
 
-def preflight(mode: str) -> None:
+def preflight(mode: str, operation: str = "start") -> None:
     if sys.platform != "linux":
         raise Blocked("Run in WSL2/Linux; native Windows is not the supported Docker launcher")
     if re.match(r"^/mnt/[a-zA-Z]/", str(ROOT)):
@@ -123,6 +123,8 @@ def preflight(mode: str) -> None:
             str(ROOT / "harness/doctor.py"),
             "--mode",
             "kind" if mode == "real-kind" else "compose",
+            "--operation",
+            operation,
         ],
         cwd=ROOT,
         check=False,
@@ -228,6 +230,23 @@ def render(cfg: dict, source: str, target: str, tag: str = "") -> Path:
     return output
 
 
+def parse_rfc3339(value: str) -> datetime:
+    """Parse aware timestamps, including Docker nanoseconds, on Python 3.10."""
+    match = re.fullmatch(
+        r"(?P<date>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})"
+        r"(?:\.(?P<fraction>\d+))?(?P<offset>Z|[+-]\d{2}:\d{2})",
+        value,
+    )
+    if match is None:
+        raise ValueError("Expected a timezone-aware RFC3339 timestamp")
+    fraction = match.group("fraction")
+    normalized = match.group("date")
+    if fraction is not None:
+        normalized += "." + (fraction + "000000")[:6]
+    offset = match.group("offset")
+    return datetime.fromisoformat(normalized + ("+00:00" if offset == "Z" else offset))
+
+
 def capture_created_node(cfg: dict, receipt: str) -> bool:
     """Record a fresh node from this confirmed-absent bootstrap, including on timeout."""
     record = existing_record(cfg)
@@ -238,8 +257,8 @@ def capture_created_node(cfg: dict, receipt: str) -> bool:
     except subprocess.CalledProcessError:
         return False
     labels = node.get("Config", {}).get("Labels", {})
-    created = datetime.fromisoformat(node["Created"].replace("Z", "+00:00"))
-    started = datetime.fromisoformat(record["creation_started_at"])
+    created = parse_rfc3339(node["Created"])
+    started = parse_rfc3339(record["creation_started_at"])
     if (
         labels.get("io.x-k8s.kind.cluster") != cfg["name"]
         or labels.get("io.x-k8s.kind.role") != "control-plane"
@@ -364,7 +383,7 @@ def up(cfg: dict) -> None:
 
 
 def down(cfg: dict) -> None:
-    preflight(cfg["mode"])
+    preflight(cfg["mode"], operation="cleanup")
     if cfg["mode"] == "mock":
         if verify_compose(cfg):
             compose(cfg, "down", "--remove-orphans")
@@ -394,7 +413,7 @@ def down(cfg: dict) -> None:
 
 
 def reset(cfg: dict) -> None:
-    preflight(cfg["mode"])
+    preflight(cfg["mode"], operation="cleanup")
     print(f"Destructive reset target: {cfg['mode']} {cfg['name']} (includes its local database)")
     if os.environ.get("PROTOHUB_RESET_CONFIRM") != cfg["name"]:
         raise Blocked("Set PROTOHUB_RESET_CONFIRM to that exact name to authorize reset")
@@ -426,7 +445,7 @@ def main() -> int:
         elif args.action == "reset-local":
             reset(cfg)
         else:
-            preflight(cfg["mode"])
+            preflight(cfg["mode"], operation="cleanup")
             if cfg["mode"] == "mock":
                 if verify_compose(cfg):
                     compose(cfg, "logs", "--tail", "100")

@@ -11,7 +11,8 @@ Redis、有料API、モデル接続は不要です。
 ## 初回起動（WSL2）
 
 WSL2 UbuntuのLinux filesystem上で作業してください。DockerのLinux daemon、Compose v2、
-buildx、Git、Python 3.10以上、makeが必要です。real-kindにはkindとkubectlも必要です。
+buildx、Git、Python 3.10以上、makeが必要です。real-kindにはkind、対応するkubectl、
+**cgroup v2で動くDocker daemon**も必要です。`make doctor-kind` が事前に検査します。
 Python/Nodeのアプリ依存は検証・ビルド用コンテナ内でuv/npmのlockfileからインストールします。
 環境確認コマンドはOS設定変更や自動インストールを行いません。
 

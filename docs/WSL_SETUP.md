@@ -81,6 +81,24 @@ Windowsブラウザで `http://localhost:8080` を開き、WSLからもHTTP応�
 
 ## kindの配置
 
+### この実装の追加前提: cgroup v2
+
+採用したkind nodeはKubernetes1.37です。Docker daemonのcgroup版を確認します:
+
+```bash
+docker info --format '{{.CgroupVersion}}'
+make doctor-kind
+```
+
+real-kindには結果が`2`であることが必要です。今回のDocker25.0.3環境は`1`で、kubeletが
+起動を拒否したため実Pod/E2E/live RBACはBLOCKEDです。Compose mockはcgroup v1でも検証できます。
+`doctor-kind`は資源作成前に不足を示し、mockへのfallbackや`failCgroupV1`の強制変更を行いません。
+
+Docker Desktop/WSLの更新・設定変更・再起動は他の作業へ影響するため、ユーザーの明示承認を
+得た別作業として行ってください。確認後に`make verify`を再実行します。
+参考: [Kubernetesの移行方針](https://kubernetes.io/blog/2026/10/06/kubernetes-cgroups-v2-shift/)、
+[Dockerのcgroup v2](https://docs.docker.com/engine/containers/runmetrics/#running-docker-on-cgroup-v2)。
+
 real-kindではAPI、worker、DBもクラスタ内に配置する。workerはin-cluster configとnamespace限定ServiceAccountを使用する。
 
 host生成のkubeconfigが `127.0.0.1:<port>` を向いている場合、それをDockerコンテナ内へ渡すとコンテナ自身を指してしまう。kubeconfigのTLS検証無効化やadmin資格情報配布で修正しない。

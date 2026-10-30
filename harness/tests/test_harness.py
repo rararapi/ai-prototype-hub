@@ -561,8 +561,10 @@ class DoctorTests(unittest.TestCase):
         endpoint="unix:///var/run/docker.sock",
         inspect_fails=False,
         server="linux",
+        cgroup="2",
         missing_docker=False,
         mode="compose",
+        operation="start",
     ):
         commands = []
 
@@ -574,7 +576,7 @@ class DoctorTests(unittest.TestCase):
             elif argv[:3] == ["docker", "context", "inspect"]:
                 stdout, returncode = json.dumps(endpoint), int(inspect_fails)
             elif argv[:2] == ["docker", "info"]:
-                stdout = server
+                stdout = cgroup if argv[-1] == "{{.CgroupVersion}}" else server
             return subprocess.CompletedProcess(argv, returncode, stdout, "")
 
         output = io.StringIO()
@@ -592,7 +594,7 @@ class DoctorTests(unittest.TestCase):
             mock.patch.object(doctor.subprocess, "run", side_effect=fake_run),
             mock.patch("sys.stdout", output),
         ):
-            code = doctor.main(["--mode", mode])
+            code = doctor.main(["--mode", mode, "--operation", operation])
         return code, output.getvalue(), commands
 
     def test_saved_context_with_local_socket_passes_without_context_mutation(self):
@@ -675,6 +677,23 @@ class DoctorTests(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIn(["kind", "version"], commands)
         self.assertIn(["kubectl", "version", "--client=true"], commands)
+
+    def test_cgroup_v1_blocks_kind_but_allows_mock(self):
+        self.assertEqual(self.call_doctor(cgroup="1", mode="compose")[0], 0)
+        code, output, commands = self.call_doctor(cgroup="1", mode="kind")
+        self.assertEqual(code, 2)
+        self.assertIn("requires cgroup v2", output)
+        self.assertIn(["docker", "info", "--format", "{{.CgroupVersion}}"], commands)
+        cleanup_code, _, cleanup_commands = self.call_doctor(
+            cgroup="1", mode="kind", operation="cleanup"
+        )
+        self.assertEqual(cleanup_code, 0)
+        self.assertNotIn(["docker", "info", "--format", "{{.CgroupVersion}}"], cleanup_commands)
+
+    def test_kind_never_contacts_remote_daemon_even_for_cgroup_probe(self):
+        code, _, commands = self.call_doctor(endpoint="ssh://remote.example", mode="kind")
+        self.assertEqual(code, 2)
+        self.assertFalse(any(command[:2] == ["docker", "info"] for command in commands))
 
 
 if __name__ == "__main__":

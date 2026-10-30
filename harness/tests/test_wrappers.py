@@ -15,6 +15,18 @@ spec.loader.exec_module(checks)
 
 
 class WrapperTests(unittest.TestCase):
+    def test_minimum_python_can_read_docker_nanosecond_timestamp(self):
+        root = Path(__file__).resolve().parents[2]
+        script = "import runpy,sys; ns=runpy.run_path(sys.argv[1]); value=ns['parse_rfc3339']('2026-10-30T00:00:00.123456789Z'); assert value.microsecond==123456 and value.utcoffset().total_seconds()==0"
+        result = subprocess.run(
+            [sys.executable, "-c", script, str(root / "scripts/local/manage.py")],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_cli_helpers_import_with_the_harness_interpreter(self):
         root = Path(__file__).resolve().parents[2]
         for path in ("scripts/local/manage.py", "scripts/checks/check.py"):

@@ -110,7 +110,7 @@ def probe(name: str, argv: list[str], required_output: str | None = None) -> boo
         )
         return False
     if required_output is not None and result.stdout.strip() != required_output:
-        print(f"BLOCKED {name}: a Linux Docker server is required")
+        print(f"BLOCKED {name}: required Docker server capability is unavailable")
         return False
     # Intentionally do not echo arbitrary tool output, environment, or contexts.
     print(f"PASS {name}")
@@ -120,6 +120,7 @@ def probe(name: str, argv: list[str], required_output: str | None = None) -> boo
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", choices=("compose", "kind"), default="compose")
+    parser.add_argument("--operation", choices=("start", "cleanup"), default="start")
     args = parser.parse_args(argv)
     if platform.system() != "Linux":
         print("BLOCKED platform: run inside WSL2 or Linux CI, not native Windows/macOS")
@@ -157,6 +158,17 @@ def main(argv: list[str] | None = None) -> int:
     if args.mode == "kind":
         success = probe("kind", ["kind", "version"]) and success
         success = probe("kubectl", ["kubectl", "version", "--client=true"]) and success
+        if endpoint_is_local and args.operation == "start":
+            cgroup_ready = probe(
+                "docker-cgroup-v2",
+                ["docker", "info", "--format", "{{.CgroupVersion}}"],
+                required_output="2",
+            )
+            if not cgroup_ready:
+                print(
+                    "BLOCKED real-kind: selected Kubernetes 1.37 requires cgroup v2; review Docker/WSL configuration with explicit approval. No override or OS change was made."
+                )
+            success = cgroup_ready and success
     if not success:
         print(
             "BLOCKED doctor: fix prerequisites manually; no installation, sudo, restart, or context change was performed"
