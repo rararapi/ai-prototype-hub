@@ -108,6 +108,23 @@
               }
             }
           },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_500",
+                    "message": "Internal error",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
           "503": {
             "description": "Dependency unavailable",
             "content": {
@@ -225,6 +242,23 @@
                   "error": {
                     "code": "validation_error",
                     "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_500",
+                    "message": "Internal error",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 }
@@ -359,6 +393,23 @@
               }
             }
           },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_500",
+                    "message": "Internal error",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
           "503": {
             "description": "Dependency unavailable",
             "content": {
@@ -482,6 +533,23 @@
                   "error": {
                     "code": "validation_error",
                     "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_500",
+                    "message": "Internal error",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 }
@@ -622,6 +690,23 @@
               }
             }
           },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_500",
+                    "message": "Internal error",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
           "503": {
             "description": "Dependency unavailable",
             "content": {
@@ -751,6 +836,23 @@
                   "error": {
                     "code": "validation_error",
                     "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_500",
+                    "message": "Internal error",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -915,6 +1017,23 @@
               }
             }
           },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_500",
+                    "message": "Internal error",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
           "503": {
             "description": "Dependency unavailable",
             "content": {
@@ -1057,6 +1176,23 @@
                   "error": {
                     "code": "validation_error",
                     "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_500",
+                    "message": "Internal error",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -1219,6 +1355,23 @@
               }
             }
           },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_500",
+                    "message": "Internal error",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
           "503": {
             "description": "Dependency unavailable",
             "content": {
@@ -1372,6 +1525,23 @@
               }
             }
           },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_500",
+                    "message": "Internal error",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
           "503": {
             "description": "Dependency unavailable",
             "content": {
@@ -1505,6 +1675,23 @@
                   "error": {
                     "code": "validation_error",
                     "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_500",
+                    "message": "Internal error",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },

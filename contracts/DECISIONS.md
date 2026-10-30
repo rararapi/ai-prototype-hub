@@ -44,3 +44,22 @@ API/DB owns persistence + migrations + HTTP. Runtime owns worker/providers/previ
 Frontend owns its files; parent installs dependencies and locks in this shared checkout.
 QA owns runners/checks/E2E/CI. Parent owns DTO/settings/Python deps/contracts and final docs.
 
+## Coordinated addition after baseline
+
+`JobStore.reconcile_observation(spec, observation) -> bool` records periodic real observations
+when generation still matches, desired is running, status is running/starting, and no operation
+is queued/running. Unhealthy observations clear preview immediately; stopped maps to starting.
+Existing expires_at is preserved so periodic observation cannot extend TTL. Failed targets are
+cleaned rather than relaunched. Backend and Runtime were notified together before implementing.
+
+HTTP 500 uses the same sanitized HttpError envelope. Generic exception text is never returned.
+
+Independent review addition: RuntimeSpec has an ephemeral `may_mutate` callback (excluded from
+comparison and persistence). Worker binds it to the current lease/generation for claimed jobs;
+providers check immediately before each mutation, including between Service and Deployment.
+Reconcile binds it to fresh current intent. A lost fence stops subsequent writes; in-flight
+network requests remain at-least-once and converge through generation checks and reconcile.
+
+QA fixture launches set `PROTOHUB_NO_ACTIVATE=1` so E2E/security never replace the developer's
+active local stack selection. Their cluster, ports, receipts and cleanup remain independent.
+

@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["pytest", "pytest-cov", "ruff", "mypy", "pyyaml", "types-PyYAML", "openapi-spec-validator", "build"]
+dev = ["pytest", "pytest-cov", "ruff", "mypy", "pyyaml", "types-PyYAML", "openapi-spec-validator", "build", "hatchling"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/protohub"]

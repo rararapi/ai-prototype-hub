@@ -43,6 +43,7 @@ def route(app: FastAPI, name: str) -> Any:
         404: "Resource not found",
         409: "State conflict",
         422: "Validation failed",
+        500: "Internal error",
         503: "Dependency unavailable",
     }.items():
         responses[code] = {

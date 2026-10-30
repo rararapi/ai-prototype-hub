@@ -1,6 +1,7 @@
 """Synchronous short DB calls; runtime calls must not hold a DB transaction."""
 
-from dataclasses import dataclass
+from collections.abc import Callable
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Protocol
 from uuid import UUID
@@ -13,6 +14,7 @@ class RuntimeSpec:
     sandbox_id: UUID
     generation: int
     template_id: str = "hello-web"
+    may_mutate: Callable[[], bool] | None = field(default=None, compare=False, repr=False)
 
 
 @dataclass(frozen=True)
@@ -67,6 +69,7 @@ class JobStore(Protocol):
     def supersede(self, claim: Claim) -> bool: ...
     def enqueue_expired(self) -> int: ...
     def reconcile_targets(self) -> list[ReconcileTarget]: ...
+    def reconcile_observation(self, spec: RuntimeSpec, observation: Observation) -> bool: ...
 
 
 class UnitOfWork(Protocol):

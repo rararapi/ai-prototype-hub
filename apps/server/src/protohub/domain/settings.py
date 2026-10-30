@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     runtime_mode: Literal["mock", "real-kind"] = "mock"
     console_origin: str = "http://localhost:8080"
     preview_origin: str = "http://localhost:8081"
-    allowed_hosts: list[str] = ["localhost", "127.0.0.1", "testserver"]
+    allowed_hosts: list[str] = ["localhost", "127.0.0.1"]
     sample_namespace: str = "protohub-samples"
     sample_image: str = "protohub/hello-web:dev"
     lease_seconds: int = 30
