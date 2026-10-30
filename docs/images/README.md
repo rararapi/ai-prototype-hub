@@ -90,6 +90,12 @@ Constraints: labels and ports exactly as specified. The rows are logical communi
 参照画像: 上記の3段の通信図。
 
 ```text
-undefined
+Use case: precise-object-edit / text clarification on a technical diagram.
+Edit target: the referenced three-lane ProtoHub engineering diagram.
+Make ONLY the following three localized TEXT changes. Preserve every node position, port, identifier elsewhere, arrow endpoint/direction/color, diagram row, bottom inventory, mock inset, typography style, white/purple palette, and all other content exactly. The connection graph has been independently verified, so DO NOT rearrange or redraw it.
+1. Replace the subtitle directly below the title. Remove the entire current sentence "経路ごとに同じコンポーネントを再掲（実際は1つのサービスです）". The replacement must read EXACTLY "同名の要素は、同じコンポーネントを再掲しています". This means repeated nodes refer to the same instance; it must NOT say the entire product has only one service.
+2. In the middle row, Worker / RuntimeProvider box: retain its existing heading and "claim / heartbeat / reconcile / TTL". Add one clear additional line "SA: protohub-worker". The ServiceAccount belongs to the WORKER.
+3. In the middle row, Kubernetes API box: retain the heading "Kubernetes API". Remove the two current sublines "in-cluster ServiceAccount" and "protohub-worker" from this box and replace them with ONE line "in-cluster API endpoint". This box represents the Kubernetes API server, not the worker identity.
+Render those updated labels cleanly, correctly spelled and legible, without covering any edges. No other modifications, no new text, no extra services or icons, no watermark.
 ```
 
