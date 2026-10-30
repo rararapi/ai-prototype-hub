@@ -6,7 +6,7 @@ x-server: &server
     dockerfile: infra/docker/server.Dockerfile
     target: runtime
   read_only: true
-  tmpfs: [/tmp:rw,noexec,nosuid,size=16m]
+  tmpfs: ['/tmp:rw,noexec,nosuid,size=16m']
   security_opt: [no-new-privileges:true]
   cap_drop: [ALL]
   labels:
@@ -59,7 +59,7 @@ services:
     image: protohub/web:dev
     build: {context: ., dockerfile: infra/docker/web.Dockerfile}
     read_only: true
-    tmpfs: [/tmp:rw,noexec,nosuid,size=16m]
+    tmpfs: ['/tmp:rw,noexec,nosuid,size=16m']
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
     ports: ['127.0.0.1:${PROTOHUB_CONSOLE_PORT:-8080}:8080']

@@ -17,6 +17,9 @@ def test_compose_exposes_only_loopback_console():
     for name in ("api", "worker", "web"):
         assert services[name]["read_only"] is True
         assert "ALL" in services[name]["cap_drop"]
+        assert len(services[name]["tmpfs"]) == 1
+        assert services[name]["tmpfs"][0].startswith("/tmp:")
+        assert "noexec,nosuid" in services[name]["tmpfs"][0]
         assert not any("docker.sock" in str(value) for value in services[name].get("volumes", []))
 
 
