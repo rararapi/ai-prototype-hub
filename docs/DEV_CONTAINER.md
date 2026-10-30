@@ -1,6 +1,8 @@
 # DevContainerで開発する
 
-ProtoHubのDevContainerは、Python・Node・uvと開発用依存を揃えるための環境です。
+ProtoHubのDevContainerの目的は、各開発者のローカルPCで、同じソースを同じ開発ツール・
+依存関係・コマンドで編集・検査できるようにすることです。Python・Node・uvと開発用依存を
+リポジトリの設定から揃え、PCごとのグローバルinstallや手作業の調整への依存を減らします。
 編集、lint、型検査、unit、契約検査、package/frontend buildをコンテナ内で進められます。
 アプリのCompose/kind起動と、必須の実環境検証はWSLホストから実行します。
 
@@ -8,6 +10,42 @@ ProtoHubのDevContainerは、Python・Node・uvと開発用依存を揃えるた
 サンプルPodとは別の開発環境であり、既存のプロセス・ServiceAccountの役割を変更しません。
 一般的な仕組みは [VS Code公式ガイド](https://code.visualstudio.com/docs/devcontainers/containers)
 を参照してください。
+
+## 各開発者のローカルPCで共有する基準
+
+全員が同じcommitの `.devcontainer/`・lockfile・make/harness・skillsを使います。
+標準の流れは **clone → Reopen in Container → 依存導入 → `make check-dev`** です。
+個人PC上のPython/Nodeの版や、以前に作ったvenv/node_modulesを開発基準にしません。
+依存や検査設定を変えるときはリポジトリへ記録し、他の開発者も同じ変更を取り込みます。
+
+| 差が出やすいもの | この構成で揃える方法 |
+| --- | --- |
+| Python・Node・uvの版 | 同じDockerfileと固定参照を使用 |
+| Python/JavaScript依存 | 同じlockfileから `uv sync --locked` / `npm ci` |
+| ホストの既存依存との混在 | DevContainerごとの専用volumeを使用 |
+| 作業directory・権限・改行 | 共通workspace、non-root/UID同期、既存 `.gitattributes` とeditorのLF設定 |
+| 開発・検査の手順 | 同じmake/harness入口、リポジトリ内のworkflowとskills |
+| 不足環境の扱い | doctorとgateで具体的にFAIL/BLOCKEDを記録し、個人の回避設定で成功扱いにしない |
+
+現時点の対象・確認状況は次のとおりです。別のローカルPCで実測していないものを、
+同じ設定ファイルがあることだけで動作保証にはしません。
+
+| ローカルPC | 現時点の扱い |
+| --- | --- |
+| Windows + WSL2 Ubuntu、Linux/amd64のDocker | 基準環境。今回のCLI実起動・開発検査を実測 |
+| 他の開発者のWindows + WSL2 PC | 同じ設定を使う対象。別PCでの実測は未実施 |
+| Linux PC / macOS PC | DevContainer設定の実測は未実施。WSL固有の手順をそのまま対応済みとしない |
+| ARM64 PC | image・ネイティブ依存・実行速度を含む実測は未実施 |
+
+コンテナで揃うのは開発環境のユーザー空間です。Docker daemon、kernel/cgroup、CPU、
+ファイル共有、空きport等のホスト条件は残るため、対応する共通前提と事前検査も必要です。
+現在は編集・コード検査をDevContainerで統一し、アプリ起動用のDocker/Compose/kindと
+その前提検査は下記のホスト側手順を使います。ローカル開発の全工程がコンテナ内で完結する
+構成にはまだなっていません。
+
+また、Python/Nodeのimage digestとアプリ依存lockは固定していますが、image再build時の
+apt取得とuvのtag参照まで完全な内容固定にはしていません。全PCでのbit単位の同一性を
+保証する構成とは区別します。build時の実ツール版を記録し、環境差を調査できるようにしています。
 
 ## 揃えるものと、ホストに残すもの
 

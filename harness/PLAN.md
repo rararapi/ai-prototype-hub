@@ -59,6 +59,11 @@ the operator guide; parent owns shared checks, CI and integration. No Docker soc
 host kubeconfig, host permissions or OS settings are added. Actual CLI/host results are
 recorded in docs/DEV_CONTAINER.md; this does not clear the existing real-kind blocker.
 
+Local-PC clarification: `local-pc-dev-standard` documents the shared per-developer
+clone/reopen/check baseline, tested Windows/WSL2 amd64 scope, untested other PCs/OS/ARM,
+and residual host/runtime and image-rebuild differences. This is a documentation-only
+clarification; it does not add runtime permissions or claim cross-PC acceptance.
+
 Final integrated make/check/full evidence follows in `.harness/reports/` and docs/VALIDATION.md.
 Real sample Pod/HTTP/lifecycle, real Playwright and live RBAC remain BLOCKED until cgroup v2.
 Do not mark full acceptance complete or convert these checks into mock passes.
