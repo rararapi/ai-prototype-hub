@@ -1,5 +1,18 @@
 # ProtoHub implementation evidence
 
+## Current acceptance and main integration (2026-10-31)
+
+- Clean e904814 passed all11 local full gates (run20261031T105929Z-f614eec3), manual real
+  browser/counter/lifecycle and daily PVC/record persistence. Failed earlier runs remain intact.
+- The same e904814 also passed GitHub CI41205573111: devcontainer and verify, all11 full gates.
+- The human then authorized main integration and selected MIT. Work item mit-main-20261031
+  adds LICENSE, updates the local skill license metadata and stale setup/status claims, and
+  documents residual issues in docs/ROADMAP.md. Runtime/API/dependencies are unchanged.
+- This documentation/license commit receives its own scoped gates and independent review;
+  main is advanced only after its exact CI head succeeds. No extra OS/permission/cost change.
+- Residual work is described, not silently started: dev-tool advisory compatibility update,
+  targeted bootstrap diagnostics, additional host/architecture coverage and product AI design.
+
 ## Starting state (2026-10-30 JST)
 
 - Branch: `codex/protohub-local-mvp`, base repository commit `5bd9059`.

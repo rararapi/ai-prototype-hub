@@ -19,7 +19,8 @@ v0は単一開発者・信頼済みサンプルが対象です。対話しなが
 このMVPの開発環境に含まれます。
 
 実装・検証の到達点は [検証記録](docs/VALIDATION.md)、依存版は
-[DEV_ENVIRONMENT](docs/DEV_ENVIRONMENT.md) を参照してください。
+[DEV_ENVIRONMENT](docs/DEV_ENVIRONMENT.md)、残課題の影響・優先度・完了条件は
+[次の開発課題](docs/ROADMAP.md) を参照してください。
 
 ## エンジニア向け：構成と実行モード
 
@@ -80,12 +81,11 @@ buildx、Git、Python 3.10以上、makeが必要です。real-kindにはkind、�
 Python/Nodeのアプリ依存は検証・ビルド用コンテナ内でuv/npmのlockfileからインストールします。
 環境確認コマンドはOS設定変更や自動インストールを行いません。
 
-この作業ブランチをWindows側からローカルに取り込む場合（pushは不要）:
+WSLのLinux filesystemへcloneし、環境を確認して起動します:
 
 ```bash
 mkdir -p ~/src
-git clone --no-hardlinks --branch codex/protohub-local-mvp \
-  /mnt/c/Git/ai-prototype-hub ~/src/ai-prototype-hub
+git clone https://github.com/rararapi/ai-prototype-hub.git ~/src/ai-prototype-hub
 cd ~/src/ai-prototype-hub
 python3 harness/doctor.py --mode compose
 make doctor
@@ -220,4 +220,9 @@ python3 harness/run.py --group portable
 - kindの通常コンテナを安全な任意コードsandboxとして扱えません。対応CNIと実通信検証を伴うネットワーク隔離も未対応です。
 - localhostのポートを分けてもCookieは分離されません。サンプルは認証Cookie・秘密を持ちません。
 - AKS/Kata、OIDC/Entra ID、LiteLLM等は将来の差し替え対象です。今回クラウド資源を作成しません。
-- リポジトリのライセンスは未選定です。依存パッケージのライセンスはそれぞれの配布元に従います。
+
+## ライセンス
+
+ProtoHub本体は [MIT License](LICENSE) です。著作権・ライセンス表示を保持して、
+商用利用、改変、再配布ができます。同梱する第三者スキル・参照資料と依存パッケージには
+それぞれのライセンスが適用されます。[スキルの出所と表示](docs/SKILLS.md) も参照してください。

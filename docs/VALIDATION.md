@@ -1,7 +1,26 @@
 # 実装・検証記録（2026-10-31 JST）
 
-対象ブランチは `codex/protohub-local-mvp` です。GitHubへのpush/PR/merge、公開、
-クラウド作成は行っていません。各担当のhandoffだけを合格証拠にはせず、親が統合コードを検証します。
+初期MVPの統合ブランチは `codex/protohub-local-mvp` です。利用者の追加依頼でpushし、
+mainへの反映とMITの選定も許可されました。クラウド作成・アプリのインターネット公開は行いません。
+各担当のhandoffだけを合格証拠にはせず、親が統合コードを検証します。
+
+## 受入結果と公開後の確認
+
+`e90481451ef9b26ec2421bbc42821fad4fa52547` はcleanな同一sourceの検証前後でfingerprintが一致し、
+WSLの `make verify` 全11ゲートがPASSしました。正確なrunは `20261031T105929Z-f614eec3` です。
+pytest130、Vitest22、ハーネス107、実PostgreSQL4、Playwright1、実runtime8項目、
+live security5項目が成功し、必要なskipはありません。両テストclusterの回収も成功しています。
+手動ブラウザのlifecycle/counter、日常用stackのdown/up、同じPVCと管理レコードの保持も確認しました。
+生ログ・画像・JUnitはignoredな `.harness/reports/` に保持し、自動公開しません。
+
+同じe904814の [GitHub CI](https://github.com/rararapi/ai-prototype-hub/actions/runs/41205573111) も成功し、
+DevContainerの `make check-dev` と、ホスト側の `make verify` 全11ゲートがPASSしました。
+CIのfull runは `20261031T132641Z-326f67dc`。失敗時だけ動く証跡uploadのskipは、必須testのskipではありません。
+この後のMIT・文書更新はアプリ/契約/依存を変更せず、更新commit自身の影響gate・独立レビュー・CIを確認してmainへ反映します。
+最新mainの結果は [Actions](https://github.com/rararapi/ai-prototype-hub/actions/workflows/verify.yml) を参照してください。
+
+以下には失敗と修復を含む履歴を残します。過去のFAILをPASSへ書き換えません。
+現在残っている課題の影響と完了条件は [ROADMAP](ROADMAP.md) を参照してください。
 
 ## 実行環境
 
@@ -149,7 +168,7 @@ API/worker/provider単体、実PostgreSQLテスト、実kind/Playwright検証を
 
 単一開発者・localhost・固定サンプルのみ。悪性コード隔離、本番認証、公開サービス、
 CNIによる敵対的通信隔離、任意コード、実組織SSO、LLM接続は未対応です。
-静的hygieneはbest-effortであり秘密検出の完全保証ではありません。LICENSEは未選定です。
-GitHub CIの定義は実装済みですが、pushしない依頼なのでGitHub上でのCI実行は未実施です。
+静的hygieneはbest-effortであり秘密検出の完全保証ではありません。ProtoHub本体は [MIT](../LICENSE) です。
+初期依頼時は未pushでしたが、追加依頼によるpush後にGitHub CIも実行・成功しました。詳細は冒頭の記録に従ってください。
 Docker/WSLのcgroup v2化は2026-10-31に承認を受けて実施しました。上記の新しい記録に
 従ってreal-kindを再検証します。AI-DLC製品機能、OIDC、AKS等は別フェーズです。

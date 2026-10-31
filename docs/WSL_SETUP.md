@@ -69,10 +69,9 @@ CLIへのfallback、接続先変更、権限変更は行いません。kind削�
 
 ## リポジトリ
 
-今回の実装ブランチは依頼に従って未pushです。現在のローカル成果物を使う場合は、
-[READMEのローカルブランチ取得手順](../README.md) に従い、Windows側のこのrepositoryから
-`codex/protohub-local-mvp` をWSLのLinux filesystemへcloneしてください。
-以下のGitHub取得例は、必要な実装が公開先へ反映されている場合に使います:
+利用者の追加依頼により実装ブランチをpushし、mainへの反映も許可されました。
+新しい環境ではGitHubのmainをWSLのLinux filesystemへcloneしてください。
+未公開のローカル作業を試す場合は、元checkoutの状態を確認して、名前を明示した別cloneを使います。
 
 ```bash
 git clone https://github.com/rararapi/ai-prototype-hub.git

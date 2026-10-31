@@ -64,7 +64,9 @@ CLIのkind binaryは公式SHA256SUMで確認します。固定値の取得と、
 - [Playwright Docker](https://playwright.dev/docs/docker)
 
 依存更新はlockfileを更新し、互換性・契約・unit/buildと実runtimeの影響gateを再実行してください。
-LICENSEは元から存在せず、今回も未選定のままです。モデル名・有料API・組織固有設定は追加していません。
+初期実装時にはLICENSEがなく未選定でしたが、2026-10-31の利用者の選択に従い、
+ProtoHub本体へ [MIT License](../LICENSE) を追加しました。第三者の既存表示は維持します。
+モデル名・有料API・組織固有設定は追加していません。
 
 2026-10-31のnpm advisory照合では、webの全依存にmoderateが13件、high/criticalは0件、
 `--omit=dev`のgraphには0件でした。13件は開発toolchainのminimatch advisoryに由来します。
