@@ -113,7 +113,14 @@ def test_daily_kind_down_scales_only_owned_workloads_and_retains_pvc(cfg, monkey
     monkeypatch.setattr(local, "wait_for_worker_drain", lambda _: None)
     monkeypatch.setattr(local, "wait_for_sample_drain", lambda _: None)
     commands = []
-    monkeypatch.setattr(local, "kube", lambda _cfg, *args: commands.append(args))
+
+    def execute(_cfg, *args, **kwargs):
+        if kwargs.get("capture"):
+            return json.dumps({"items": [{"metadata": {"name": "synthetic-sample"}}]})
+        commands.append(args)
+        return ""
+
+    monkeypatch.setattr(local, "kube", execute)
     local.down(cfg)
     assert len(commands) == 3
     assert all("scale" in argv and "--replicas=0" in argv for argv in commands)

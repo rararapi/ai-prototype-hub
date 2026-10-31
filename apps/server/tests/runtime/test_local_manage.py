@@ -32,18 +32,23 @@ def pod():
 
 
 class Cluster:
-    def __init__(self, worker_frames=None, sample_never_stops=False):
+    def __init__(
+        self, worker_frames=None, sample_never_stops=False, samples=None, sample_pod_frames=None
+    ):
         self.worker_frames = worker_frames or [
             (6, 0, []),  # Controller has not observed the scale, despite an empty Pod list.
             (7, 1, [pod()]),
             (7, 0, []),
         ]
         self.sample_never_stops = sample_never_stops
+        self.sample_pod_frames = (
+            sample_pod_frames if sample_pod_frames is not None else [[pod()], []]
+        )
         self.worker_reads = 0
         self.sample_reads = 0
         self.worker_drained = False
         self.sample_drained = False
-        self.samples = {"first"}
+        self.samples = {"first"} if samples is None else set(samples)
         self.scaled_samples = set()
         self.events = []
         self.request_timeouts = []
@@ -57,6 +62,10 @@ class Cluster:
                 self.events.append("worker-scale")
             elif namespace == "protohub-samples":
                 assert self.worker_drained, "sample scale overtook a live worker"
+                if not self.samples:
+                    raise subprocess.CalledProcessError(
+                        1, ["kubectl", *args], stderr="no objects passed to scale"
+                    )
                 self.scaled_samples = self.samples.copy()
                 self.events.append("sample-scale")
             else:
@@ -97,15 +106,19 @@ class Cluster:
                     "items": [
                         {
                             "metadata": {"generation": 4},
-                            "spec": {"replicas": 0},
+                            "spec": {"replicas": 0 if sample in self.scaled_samples else 1},
                             "status": {"observedGeneration": 4},
                         }
-                        for _ in self.samples
+                        for sample in self.samples
                     ]
                 }
             )
         self.sample_reads += 1
-        remaining = [pod()] if self.sample_never_stops or self.sample_reads == 1 else []
+        remaining = (
+            [pod()]
+            if self.sample_never_stops
+            else self.sample_pod_frames[min(self.sample_reads - 1, len(self.sample_pod_frames) - 1)]
+        )
         if not remaining:
             self.sample_drained = True
             self.events.append("samples-drained")
@@ -140,6 +153,80 @@ def test_down_drains_worker_before_stopping_late_sample_and_is_repeatable(cfg, m
     assert "Stopped owned workloads" in capsys.readouterr().out
     local.down(cfg)
     assert cluster.events.count("control-scale") == 2
+
+
+def test_empty_sample_namespace_down_is_successful_and_repeatable(cfg, monkeypatch, capsys):
+    cluster = Cluster(worker_frames=[(7, 0, [])], samples=set(), sample_pod_frames=[[]])
+    monkeypatch.setattr(local, "kube", cluster)
+    local.down(cfg)
+    local.down(cfg)
+    # The fake rejects empty scale exactly as kubectl does; production must not call it.
+    assert "sample-scale" not in cluster.events
+    assert cluster.events.count("worker-scale") == 2
+    assert cluster.events.count("control-scale") == 2
+    assert cluster.sample_reads == 2
+    assert capsys.readouterr().out.count("Stopped owned workloads") == 2
+
+
+def test_empty_deployment_list_still_waits_for_orphan_terminating_pods(cfg, monkeypatch):
+    cluster = Cluster(worker_frames=[(7, 0, [])], samples=set(), sample_pod_frames=[[pod()], []])
+    monkeypatch.setattr(local, "kube", cluster)
+    local.down(cfg)
+    assert "sample-scale" not in cluster.events
+    assert cluster.sample_reads == 2
+    assert cluster.events.index("samples-drained") < cluster.events.index("control-scale")
+
+
+def test_empty_deployment_list_with_stuck_orphan_does_not_report_success(cfg, monkeypatch, capsys):
+    cluster = Cluster(worker_frames=[(7, 0, [])], samples=set(), sample_never_stops=True)
+    monkeypatch.setattr(local, "kube", cluster)
+    wait = local.wait_for_sample_drain
+    monkeypatch.setattr(local, "wait_for_sample_drain", lambda cfg: wait(cfg, timeout_seconds=1))
+    with pytest.raises(TimeoutError, match="sample"):
+        local.down(cfg)
+    assert "sample-scale" not in cluster.events and "control-scale" not in cluster.events
+    assert "Stopped owned workloads" not in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("response", ["invalid JSON", "[]", '{"items":{}}', '{"items":[null]}'])
+def test_sample_selection_malformed_response_is_failure(cfg, monkeypatch, capsys, response):
+    cluster = Cluster(worker_frames=[(7, 0, [])], samples=set(), sample_pod_frames=[[]])
+
+    def observe(cfg, *args, **kwargs):
+        if "protohub-samples" in args and "deployments" in args:
+            return response
+        return cluster(cfg, *args, **kwargs)
+
+    monkeypatch.setattr(local, "kube", observe)
+    with pytest.raises(ValueError):
+        local.down(cfg)
+    assert "sample-scale" not in cluster.events and "control-scale" not in cluster.events
+    assert "Stopped owned workloads" not in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        OSError("synthetic API outage"),
+        subprocess.CalledProcessError(1, ["kubectl", "get", "deployments"]),
+        subprocess.TimeoutExpired(["kubectl", "get", "deployments"], 10),
+    ],
+)
+def test_sample_selection_api_errors_have_nonzero_cli_exit(cfg, monkeypatch, capsys, error):
+    cluster = Cluster(worker_frames=[(7, 0, [])], samples=set(), sample_pod_frames=[[]])
+
+    def observe(cfg, *args, **kwargs):
+        if "protohub-samples" in args and "deployments" in args:
+            raise error
+        return cluster(cfg, *args, **kwargs)
+
+    monkeypatch.setattr(local, "kube", observe)
+    monkeypatch.setattr(local, "config", lambda _: cfg)
+    monkeypatch.setattr(local.sys, "argv", ["manage.py", "down"])
+    monkeypatch.setattr(local, "signal", SimpleNamespace(SIGTERM=15, signal=lambda *args: None))
+    assert local.main() == 1
+    assert "sample-scale" not in cluster.events and "control-scale" not in cluster.events
+    assert "Stopped owned workloads" not in capsys.readouterr().out
 
 
 def test_worker_timeout_prevents_sample_and_control_shutdown(cfg, monkeypatch, capsys):

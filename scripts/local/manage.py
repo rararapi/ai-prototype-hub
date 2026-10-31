@@ -473,16 +473,39 @@ def down(cfg: dict) -> None:
     elif verify_kind(cfg):
         kube(cfg, "-n", "protohub-system", "scale", "deployment/worker", "--replicas=0")
         wait_for_worker_drain(cfg)
-        kube(
-            cfg,
-            "-n",
-            "protohub-samples",
-            "scale",
-            "deployment",
-            "-l",
-            "app.kubernetes.io/managed-by=protohub",
-            "--replicas=0",
+        selected = json.loads(
+            kube(
+                cfg,
+                "--request-timeout=5s",
+                "-n",
+                "protohub-samples",
+                "get",
+                "deployments",
+                "-l",
+                "app.kubernetes.io/managed-by=protohub",
+                "-o",
+                "json",
+                capture=True,
+                timeout_seconds=10,
+            )
         )
+        if (
+            not isinstance(selected, dict)
+            or not isinstance(selected.get("items"), list)
+            or not all(isinstance(item, dict) for item in selected["items"])
+        ):
+            raise ValueError("Invalid Kubernetes sample Deployment list")
+        if selected["items"]:
+            kube(
+                cfg,
+                "-n",
+                "protohub-samples",
+                "scale",
+                "deployment",
+                "-l",
+                "app.kubernetes.io/managed-by=protohub",
+                "--replicas=0",
+            )
         wait_for_sample_drain(cfg)
         kube(
             cfg,
@@ -553,7 +576,7 @@ def main() -> int:
     except KeyboardInterrupt:
         print("FAIL local operation interrupted; owned resource identity retained", file=sys.stderr)
         return 130
-    except (subprocess.CalledProcessError, OSError, ValueError) as exc:
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError, ValueError) as exc:
         print(
             f"FAIL local {args.action}: {type(exc).__name__}; inspect the command output",
             file=sys.stderr,
