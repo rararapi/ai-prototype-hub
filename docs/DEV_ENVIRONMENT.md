@@ -66,6 +66,13 @@ CLIのkind binaryは公式SHA256SUMで確認します。固定値の取得と、
 依存更新はlockfileを更新し、互換性・契約・unit/buildと実runtimeの影響gateを再実行してください。
 LICENSEは元から存在せず、今回も未選定のままです。モデル名・有料API・組織固有設定は追加していません。
 
+2026-10-31のnpm advisory照合では、webの全依存にmoderateが13件、high/criticalは0件、
+`--omit=dev`のgraphには0件でした。13件は開発toolchainのminimatch advisoryに由来します。
+実行用web imageはnginxとbuild済みdistだけで、Node/dev node_modulesを含みません。
+これはnpm照合範囲の結果であり、Python/nginx/OSや全脆弱性を保証する検査ではありません。
+詳細は [上流advisory](https://github.com/isaacs/minimatch/security/advisories/GHSA-g3hv-75wg-m249)。
+開発依存の互換更新は次の限定作業に残し、今回`npm audit fix --force`でmajor変更を混入させません。
+
 ## Dev Container
 
 `.devcontainer/Dockerfile` は検証imageと同じPython 3.11.18、Node 24.18.0のdigestとuv 0.11.19を

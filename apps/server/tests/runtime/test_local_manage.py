@@ -54,7 +54,7 @@ class Cluster:
         self.request_timeouts = []
         self.process_timeouts = []
 
-    def __call__(self, cfg, *args, capture=False, timeout_seconds=None):
+    def __call__(self, cfg, *args, capture=False, timeout_seconds=None, capture_stderr=False):
         namespace = args[args.index("-n") + 1]
         if "scale" in args:
             assert not capture
@@ -185,6 +185,129 @@ def test_empty_deployment_list_with_stuck_orphan_does_not_report_success(cfg, mo
     with pytest.raises(TimeoutError, match="sample"):
         local.down(cfg)
     assert "sample-scale" not in cluster.events and "control-scale" not in cluster.events
+    assert "Stopped owned workloads" not in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "error: no objects passed to scale\n",
+        'Error from server (NotFound): deployments.apps "first" not found\n',
+        'Error from server (NotFound): deployments/scale.apps "first" not found\n',
+    ],
+)
+def test_scale_disappearance_is_reobserved_and_pods_still_drained(
+    cfg, monkeypatch, capsys, message
+):
+    cluster = Cluster(worker_frames=[(7, 0, [])], sample_pod_frames=[[pod()], []])
+    selections = []
+
+    def observe(cfg, *args, **kwargs):
+        if "protohub-samples" in args and "deployments" in args:
+            selections.append(cluster.samples.copy())
+        if "protohub-samples" in args and "scale" in args:
+            assert kwargs["capture_stderr"] is True and kwargs["timeout_seconds"] == 10
+            cluster.samples.clear()  # A previously accepted foreground delete finishes now.
+            raise subprocess.CalledProcessError(1, ["kubectl", *args], stderr=message)
+        return cluster(cfg, *args, **kwargs)
+
+    monkeypatch.setattr(local, "kube", observe)
+    local.down(cfg)
+    assert selections[:2] == [{"first"}, set()]
+    assert cluster.sample_reads == 2
+    assert cluster.events.index("samples-drained") < cluster.events.index("control-scale")
+    assert "Stopped owned workloads" in capsys.readouterr().out
+
+
+def test_missing_scale_target_still_present_is_not_ignored(cfg, monkeypatch, capsys):
+    cluster = Cluster(worker_frames=[(7, 0, [])])
+    selections = []
+
+    def observe(cfg, *args, **kwargs):
+        if "protohub-samples" in args and "deployments" in args:
+            selections.append(cluster.samples.copy())
+        if "protohub-samples" in args and "scale" in args:
+            raise subprocess.CalledProcessError(
+                1, ["kubectl", *args], stderr="error: no objects passed to scale\n"
+            )
+        return cluster(cfg, *args, **kwargs)
+
+    monkeypatch.setattr(local, "kube", observe)
+    with pytest.raises(subprocess.CalledProcessError):
+        local.down(cfg)
+    assert selections == [{"first"}, {"first"}]
+    assert "control-scale" not in cluster.events
+    assert "Stopped owned workloads" not in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        'Error from server (Forbidden): deployments.apps "first" is forbidden\n',
+        "error: the server is currently unable to handle the request\n",
+        "error: no objects passed to scale\nError from server (Forbidden): access denied\n",
+        'Error from server (NotFound): namespaces "protohub-samples" not found\n',
+    ],
+)
+def test_other_scale_errors_fail_even_if_deployments_disappeared(cfg, monkeypatch, capsys, message):
+    cluster = Cluster(worker_frames=[(7, 0, [])])
+    selections = []
+
+    def observe(cfg, *args, **kwargs):
+        if "protohub-samples" in args and "deployments" in args:
+            selections.append(cluster.samples.copy())
+        if "protohub-samples" in args and "scale" in args:
+            cluster.samples.clear()
+            raise subprocess.CalledProcessError(1, ["kubectl", *args], stderr=message)
+        return cluster(cfg, *args, **kwargs)
+
+    monkeypatch.setattr(local, "kube", observe)
+    with pytest.raises(subprocess.CalledProcessError):
+        local.down(cfg)
+    assert selections == [{"first"}]  # Other errors never trigger the recovery re-observation.
+    assert "control-scale" not in cluster.events
+    assert "Stopped owned workloads" not in capsys.readouterr().out
+
+
+def test_disappeared_scale_target_with_live_orphan_still_times_out(cfg, monkeypatch, capsys):
+    cluster = Cluster(worker_frames=[(7, 0, [])], sample_never_stops=True)
+
+    def observe(cfg, *args, **kwargs):
+        if "protohub-samples" in args and "scale" in args:
+            cluster.samples.clear()
+            raise subprocess.CalledProcessError(
+                1, ["kubectl", *args], stderr="error: no objects passed to scale\n"
+            )
+        return cluster(cfg, *args, **kwargs)
+
+    monkeypatch.setattr(local, "kube", observe)
+    wait = local.wait_for_sample_drain
+    monkeypatch.setattr(local, "wait_for_sample_drain", lambda cfg: wait(cfg, timeout_seconds=1))
+    with pytest.raises(TimeoutError, match="sample"):
+        local.down(cfg)
+    assert "control-scale" not in cluster.events
+    assert "Stopped owned workloads" not in capsys.readouterr().out
+
+
+def test_scale_timeout_is_not_recovered_even_when_target_disappeared(cfg, monkeypatch, capsys):
+    cluster = Cluster(worker_frames=[(7, 0, [])])
+    selections = []
+
+    def observe(cfg, *args, **kwargs):
+        if "protohub-samples" in args and "deployments" in args:
+            selections.append(cluster.samples.copy())
+        if "protohub-samples" in args and "scale" in args:
+            cluster.samples.clear()
+            raise subprocess.TimeoutExpired(["kubectl", *args], 10)
+        return cluster(cfg, *args, **kwargs)
+
+    monkeypatch.setattr(local, "kube", observe)
+    monkeypatch.setattr(local, "config", lambda _: cfg)
+    monkeypatch.setattr(local.sys, "argv", ["manage.py", "down"])
+    monkeypatch.setattr(local, "signal", SimpleNamespace(SIGTERM=15, signal=lambda *args: None))
+    assert local.main() == 1
+    assert selections == [{"first"}]
+    assert "control-scale" not in cluster.events
     assert "Stopped owned workloads" not in capsys.readouterr().out
 
 
@@ -351,6 +474,41 @@ def test_kube_forwards_optional_timeout_to_subprocess(cfg, monkeypatch):
     assert calls[-1][0][:3] == ["kubectl", "--context", "kind-protohub-test"]
     local.kube(cfg, "get", "pods", capture=True)
     assert calls[-1][1]["timeout"] is None
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [
+        subprocess.CalledProcessError(1, ["kubectl"], stderr="error: no objects passed to scale\n"),
+        subprocess.TimeoutExpired(["kubectl"], 10, stderr=b"partial timeout diagnostic\n"),
+    ],
+)
+def test_opt_in_stderr_capture_preserves_error_output(cfg, monkeypatch, capsys, failure):
+    calls = []
+
+    def execute(argv, **kwargs):
+        calls.append(kwargs)
+        raise failure
+
+    monkeypatch.setattr(local.subprocess, "run", execute)
+    with pytest.raises(type(failure)) as caught:
+        local.kube(cfg, "scale", "deployment", capture_stderr=True, timeout_seconds=10)
+    assert caught.value is failure
+    assert calls[0]["stderr"] == subprocess.PIPE
+    expected = failure.stderr.decode() if isinstance(failure.stderr, bytes) else failure.stderr
+    assert capsys.readouterr().err == expected
+
+
+def test_normal_commands_keep_uncaptured_stderr(cfg, monkeypatch):
+    calls = []
+
+    def execute(argv, **kwargs):
+        calls.append(kwargs)
+        return subprocess.CompletedProcess(argv, 0)
+
+    monkeypatch.setattr(local.subprocess, "run", execute)
+    local.kube(cfg, "get", "pods")
+    assert calls[0]["stderr"] is None and calls[0]["timeout"] is None
 
 
 def test_stuck_kubectl_process_times_out_and_cli_never_continues_shutdown(cfg, monkeypatch, capsys):

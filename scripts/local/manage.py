@@ -27,16 +27,34 @@ class Blocked(Exception):
     pass
 
 
-def run(argv: list[str], capture: bool = False, *, timeout_seconds: float | None = None) -> str:
-    result = subprocess.run(
-        argv,
-        cwd=ROOT,
-        check=True,
-        stdin=subprocess.DEVNULL,
-        text=True,
-        stdout=subprocess.PIPE if capture else None,
-        timeout=timeout_seconds,
-    )
+def run(
+    argv: list[str],
+    capture: bool = False,
+    *,
+    timeout_seconds: float | None = None,
+    capture_stderr: bool = False,
+) -> str:
+    try:
+        result = subprocess.run(
+            argv,
+            cwd=ROOT,
+            check=True,
+            stdin=subprocess.DEVNULL,
+            text=True,
+            stdout=subprocess.PIPE if capture else None,
+            stderr=subprocess.PIPE if capture_stderr else None,
+            timeout=timeout_seconds,
+        )
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
+        if capture_stderr:
+            error_text = exc.stderr
+            if isinstance(error_text, bytes):
+                error_text = error_text.decode("utf-8", errors="replace")
+            if isinstance(error_text, str):
+                sys.stderr.write(error_text)
+        raise
+    if capture_stderr and isinstance(result.stderr, str):
+        sys.stderr.write(result.stderr)
     return result.stdout.strip() if capture else ""
 
 
@@ -179,8 +197,16 @@ def verify_compose(cfg: dict) -> bool:
     return exists
 
 
-def kube(cfg: dict, *args: str, capture: bool = False, timeout_seconds: float | None = None) -> str:
+def kube(
+    cfg: dict,
+    *args: str,
+    capture: bool = False,
+    timeout_seconds: float | None = None,
+    capture_stderr: bool = False,
+) -> str:
     command = ["kubectl", "--context", "kind-" + cfg["name"], *args]
+    if capture_stderr:
+        return run(command, capture, timeout_seconds=timeout_seconds, capture_stderr=True)
     if timeout_seconds is None:
         return run(command, capture)
     return run(command, capture, timeout_seconds=timeout_seconds)
@@ -465,6 +491,47 @@ def up(cfg: dict) -> None:
         print("Mock runtime — no sample application or preview is started")
 
 
+def selected_sample_deployments(cfg: dict) -> list[dict]:
+    selected = json.loads(
+        kube(
+            cfg,
+            "--request-timeout=5s",
+            "-n",
+            "protohub-samples",
+            "get",
+            "deployments",
+            "-l",
+            "app.kubernetes.io/managed-by=protohub",
+            "-o",
+            "json",
+            capture=True,
+            timeout_seconds=10,
+        )
+    )
+    if (
+        not isinstance(selected, dict)
+        or not isinstance(selected.get("items"), list)
+        or not all(isinstance(item, dict) for item in selected["items"])
+    ):
+        raise ValueError("Invalid Kubernetes sample Deployment list")
+    return selected["items"]
+
+
+def missing_scale_target(exc: subprocess.CalledProcessError) -> bool:
+    """Recognize only explicit target disappearance, never mixed/other failures."""
+    if not isinstance(exc.stderr, str):
+        return False
+    lines = [line.strip() for line in exc.stderr.splitlines() if line.strip()]
+    return bool(lines) and all(
+        line in {"error: no objects passed to scale", "no objects passed to scale"}
+        or re.fullmatch(
+            r'Error from server \(NotFound\): deployments(?:/scale)?(?:\.apps)? "[^"\r\n]+" not found',
+            line,
+        )
+        for line in lines
+    )
+
+
 def down(cfg: dict) -> None:
     preflight(cfg["mode"], operation="cleanup")
     if cfg["mode"] == "mock":
@@ -473,39 +540,24 @@ def down(cfg: dict) -> None:
     elif verify_kind(cfg):
         kube(cfg, "-n", "protohub-system", "scale", "deployment/worker", "--replicas=0")
         wait_for_worker_drain(cfg)
-        selected = json.loads(
-            kube(
-                cfg,
-                "--request-timeout=5s",
-                "-n",
-                "protohub-samples",
-                "get",
-                "deployments",
-                "-l",
-                "app.kubernetes.io/managed-by=protohub",
-                "-o",
-                "json",
-                capture=True,
-                timeout_seconds=10,
-            )
-        )
-        if (
-            not isinstance(selected, dict)
-            or not isinstance(selected.get("items"), list)
-            or not all(isinstance(item, dict) for item in selected["items"])
-        ):
-            raise ValueError("Invalid Kubernetes sample Deployment list")
-        if selected["items"]:
-            kube(
-                cfg,
-                "-n",
-                "protohub-samples",
-                "scale",
-                "deployment",
-                "-l",
-                "app.kubernetes.io/managed-by=protohub",
-                "--replicas=0",
-            )
+        if selected_sample_deployments(cfg):
+            try:
+                kube(
+                    cfg,
+                    "--request-timeout=5s",
+                    "-n",
+                    "protohub-samples",
+                    "scale",
+                    "deployment",
+                    "-l",
+                    "app.kubernetes.io/managed-by=protohub",
+                    "--replicas=0",
+                    timeout_seconds=10,
+                    capture_stderr=True,
+                )
+            except subprocess.CalledProcessError as exc:
+                if not missing_scale_target(exc) or selected_sample_deployments(cfg):
+                    raise
         wait_for_sample_drain(cfg)
         kube(
             cfg,

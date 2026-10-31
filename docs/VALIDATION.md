@@ -50,6 +50,18 @@ live securityは独立fixtureで5項目がPASSし、各fixtureの所有を照合
 正確な `.harness/reports/<run_id>/report.json` の全gate、complete、中断有無、実行前後の
 source fingerprintで判定します。過去PASSの流用や、ブラウザの手動確認によるE2E代替はしません。
 
+通常の`make down`の追加実検証では、sampleが0件だとkubectl scaleが失敗する不具合を検出。
+`f98381d`で空一覧だけscaleを省略し、残存Podの観測は継続するよう修正しました。
+同commitの実kind日常停止→全制御Pod消失→`make up-real`はPASSです。DB PodのUIDが変わり、
+PVCのUID、削除済み管理レコードのID/status/generationが保持されることを検査しています。
+証跡はmaintenance directoryの`kind-persistence.json`。この時点のlauncher関連38テストもPASS。
+先行full `20261031T084855Z-053e5d7a`は、発見済みの停止不具合を修正するため途中で中断し、
+合格には数えません。中断時にroot所有となった一部unit生出力はWindowsへcopyできず、
+そのrunの元WSL directoryに保持しています。
+さらに独立レビューで、先行削除が一覧取得とscaleの間に完了する競合を検査しました。
+明示的な対象消失エラーだけを分類し、新しい一覧が空かつPod drainが完了した場合だけ
+停止を続行します。権限・通信・timeoutエラーは無視しません。関連51テストがPASSしています。
+
 ## 2026-10-30時点の証跡（履歴）
 
 | 対象 | 結果 | 証跡 |

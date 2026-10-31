@@ -96,3 +96,14 @@ dc7fc38 adds bounded non-ephemeral fixture port selection and wall-clock subproc
 for drain; launcher28 and port7 regressions plus independent reviews passed. Re-run full on
 the integrated documentation/source HEAD and record that exact report before workflow finish.
 
+Supplemental daily stop found the empty sample selector scale failure. Repair scope was
+replanned (the earlier three-attempt budget was not silently extended) to
+real-kind-down-empty-20261031. f98381d fixes the empty case while always draining remaining
+Pods; actual daily down/all control Pods gone/up passed with a new DB Pod and the same PVC
+and management record. An independent review also checks the foreground-delete/scale
+disappearance race before final acceptance. The interrupted eb31499 full is not a PASS.
+The narrow race handler requires explicit target-disappearance diagnostics, a fresh empty
+Deployment selection and successful Pod drain; other errors remain failures. Runtime's
+related launcher suites now contain 51 passing tests. Final full/review must match the new
+integrated HEAD; no resource-reset or OS-setting change was used for these repairs.
+
