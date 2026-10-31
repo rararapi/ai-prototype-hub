@@ -62,6 +62,13 @@ PVCのUID、削除済み管理レコードのID/status/generationが保持され
 明示的な対象消失エラーだけを分類し、新しい一覧が空かつPod drainが完了した場合だけ
 停止を続行します。権限・通信・timeoutエラーは無視しません。関連51テストがPASSしています。
 
+`5a7b64f`のfull `20261031T090143Z-c5660244`は、Playwrightの削除完了poll中に
+全体180秒のtest budgetを使い切りFAILになりました。個別expectの100秒は残っていたため、
+通常30秒のPod終了猶予を複数回含む2アプリの一連操作に、全体420秒を割り当てます。
+個別expect100秒、retry0、全assertionは維持します。設定読込と1spec収集はPASS。
+同runのsecurityは既知の失敗後に中断した記録です。trace・失敗画像・全reportを保持し、
+このrunを合格には数えません。初回Playwright image取得後の最終統合HEADで再実行します。
+
 ## 2026-10-30時点の証跡（履歴）
 
 | 対象 | 結果 | 証跡 |

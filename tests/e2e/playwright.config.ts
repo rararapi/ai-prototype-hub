@@ -6,7 +6,8 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   retries: 0,
-  timeout: 180_000,
+  // The full lifecycle includes several normal Pod termination graces on WSL.
+  timeout: 420_000,
   expect: { timeout: 100_000 },
   outputDir: '/evidence/browser',
   reporter: [['list'], ['junit', { outputFile: '/evidence/playwright.xml' }], ['html', { outputFolder: '/evidence/html', open: 'never' }]],

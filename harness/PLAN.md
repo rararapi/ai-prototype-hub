@@ -106,4 +106,9 @@ The narrow race handler requires explicit target-disappearance diagnostics, a fr
 Deployment selection and successful Pod drain; other errors remain failures. Runtime's
 related launcher suites now contain 51 passing tests. Final full/review must match the new
 integrated HEAD; no resource-reset or OS-setting change was used for these repairs.
+The first real browser run on5a7b64f reached deletion but hit the aggregate180s budget.
+The two-app scenario now has420s while each expectation remains100s, retries remain0,
+and assertions are unchanged. Failed trace/screenshots/report are preserved; security in
+that run was interrupted before repetition. Config/spec collection passes; final runtime
+acceptance still requires all eleven gates on the new integrated HEAD.
 
