@@ -68,6 +68,10 @@ PVCのUID、削除済み管理レコードのID/status/generationが保持され
 個別expect100秒、retry0、全assertionは維持します。設定読込と1spec収集はPASS。
 同runのsecurityは既知の失敗後に中断した記録です。trace・失敗画像・全reportを保持し、
 このrunを合格には数えません。初回Playwright image取得後の最終統合HEADで再実行します。
+大きなimage展開後の一時的なWSL CLI timeoutで、このrunのfixture cleanupも拒否されました。
+daemonの正常応答とCLI復帰を確認後、元の完全node ID・作成receipt・所有記録を照合し、
+該当E2Eノード1個だけを回収しました。`e2e-recovery-cleanup.json`はPASSです。
+日常用kindと既存volumeは保持し、追加のOS再起動や権限変更は行っていません。
 
 ## 2026-10-30時点の証跡（履歴）
 

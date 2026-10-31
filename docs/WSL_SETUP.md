@@ -55,6 +55,12 @@ python3 harness/doctor.py --mode kind
 
 Docker権限、企業VPN、proxy、firewallの制約があるときは原因を分ける。WSLからDockerへ接続できない問題を、公開bindやTLS無効化で回避しない。
 
+大きなimageの初回展開後、このPCではWSL側CLIのversion/info呼び出しが一時的にdoctorの
+12秒上限を超えました。その時もWindows側daemonとローカルUnix socketは応答しており、
+後のCLI測定も復帰しています。timeoutだけでdaemon停止やcgroup v1と決め付けず、負荷と
+選択endpointを読み取り確認してください。同じ失敗を無制限に再試行せず、応答復帰を確認して
+所有記録が一致する残存fixtureだけを回収します。この事例では追加OS設定・権限変更・再起動は不要でした。
+
 ## リポジトリ
 
 今回の実装ブランチは依頼に従って未pushです。現在のローカル成果物を使う場合は、

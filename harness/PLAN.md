@@ -111,4 +111,8 @@ The two-app scenario now has420s while each expectation remains100s, retries rem
 and assertions are unchanged. Failed trace/screenshots/report are preserved; security in
 that run was interrupted before repetition. Config/spec collection passes; final runtime
 acceptance still requires all eleven gates on the new integrated HEAD.
+Post-image-extraction Ubuntu CLI timeouts also blocked that fixture's cleanup. Read-only
+native plugin/socket/daemon probes confirmed recovery; the exact retained node was then
+removed using its original ID/receipt and normal ownership guard. Recovery cleanup PASS;
+daily resources retained, no additional OS restart/config/permission change was needed.
 
