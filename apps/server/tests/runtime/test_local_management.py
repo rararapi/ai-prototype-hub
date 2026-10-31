@@ -110,6 +110,8 @@ def test_daily_kind_down_scales_only_owned_workloads_and_retains_pvc(cfg, monkey
     operations = []
     monkeypatch.setattr(local, "preflight", lambda _, **kwargs: operations.append(kwargs))
     monkeypatch.setattr(local, "verify_kind", lambda _: True)
+    monkeypatch.setattr(local, "wait_for_worker_drain", lambda _: None)
+    monkeypatch.setattr(local, "wait_for_sample_drain", lambda _: None)
     commands = []
     monkeypatch.setattr(local, "kube", lambda _cfg, *args: commands.append(args))
     local.down(cfg)

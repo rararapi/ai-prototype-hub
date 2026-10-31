@@ -1,0 +1,245 @@
+"""Shutdown sequencing uses observed controller and Pod state, never scale acceptance."""
+
+import importlib.util
+import json
+from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
+
+SOURCE = Path(__file__).resolve().parents[4] / "scripts/local/manage.py"
+SPEC = importlib.util.spec_from_file_location("protohub_local_drain", SOURCE)
+local = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(local)
+
+
+class Clock:
+    def __init__(self):
+        self.now = 0.0
+
+    def monotonic(self):
+        return self.now
+
+    def sleep(self, seconds):
+        self.now += seconds
+
+
+def pod():
+    return {"metadata": {"deletionTimestamp": "2026-10-31T00:00:00Z"}}
+
+
+class Cluster:
+    def __init__(self, worker_frames=None, sample_never_stops=False):
+        self.worker_frames = worker_frames or [
+            (6, 0, []),  # Controller has not observed the scale, despite an empty Pod list.
+            (7, 1, [pod()]),
+            (7, 0, []),
+        ]
+        self.sample_never_stops = sample_never_stops
+        self.worker_reads = 0
+        self.sample_reads = 0
+        self.worker_drained = False
+        self.sample_drained = False
+        self.samples = {"first"}
+        self.scaled_samples = set()
+        self.events = []
+        self.request_timeouts = []
+
+    def __call__(self, cfg, *args, capture=False):
+        namespace = args[args.index("-n") + 1]
+        if "scale" in args:
+            assert not capture
+            if "deployment/worker" in args:
+                self.events.append("worker-scale")
+            elif namespace == "protohub-samples":
+                assert self.worker_drained, "sample scale overtook a live worker"
+                self.scaled_samples = self.samples.copy()
+                self.events.append("sample-scale")
+            else:
+                assert self.worker_drained and self.sample_drained
+                self.events.append("control-scale")
+            return ""
+        assert capture and "get" in args
+        timeout = next(value for value in args if value.startswith("--request-timeout="))
+        self.request_timeouts.append(float(timeout.split("=")[1][:-1]))
+        resource = args[args.index("get") + 1]
+        if namespace == "protohub-system":
+            frame = self.worker_frames[min(self.worker_reads, len(self.worker_frames) - 1)]
+            observed, replicas, pods = frame
+            if resource == "deployment":
+                return json.dumps(
+                    {
+                        "metadata": {"generation": 7},
+                        "spec": {"replicas": 0},
+                        "status": {"observedGeneration": observed, "replicas": replicas},
+                    }
+                )
+            assert args[args.index("-l") + 1] == "app=protohub-worker"
+            if replicas:
+                # Simulate the worker's previously accepted create finishing during termination.
+                self.samples.add("late")
+                self.events.append("late-sample-created")
+            if observed == 7 and not replicas and not pods:
+                self.worker_drained = True
+                self.events.append("worker-drained")
+            self.worker_reads += 1
+            return json.dumps({"items": pods})
+        assert namespace == "protohub-samples"
+        assert args[args.index("-l") + 1] == "app.kubernetes.io/managed-by=protohub"
+        if resource == "deployments":
+            return json.dumps(
+                {
+                    "items": [
+                        {
+                            "metadata": {"generation": 4},
+                            "spec": {"replicas": 0},
+                            "status": {"observedGeneration": 4},
+                        }
+                        for _ in self.samples
+                    ]
+                }
+            )
+        self.sample_reads += 1
+        remaining = [pod()] if self.sample_never_stops or self.sample_reads == 1 else []
+        if not remaining:
+            self.sample_drained = True
+            self.events.append("samples-drained")
+        return json.dumps({"items": remaining})
+
+
+@pytest.fixture
+def cfg(monkeypatch):
+    monkeypatch.setattr(local, "preflight", lambda *args, **kwargs: None)
+    monkeypatch.setattr(local, "verify_kind", lambda _: True)
+    monkeypatch.setattr(local, "time", Clock())
+    return {
+        "mode": "real-kind",
+        "name": "protohub-test",
+        "owner_id": "synthetic-owner",
+        "console_port": 18080,
+        "preview_port": 18081,
+    }
+
+
+def test_down_drains_worker_before_stopping_late_sample_and_is_repeatable(cfg, monkeypatch, capsys):
+    cluster = Cluster()
+    monkeypatch.setattr(local, "kube", cluster)
+    local.down(cfg)
+    assert cluster.scaled_samples == {"first", "late"}
+    assert cluster.worker_reads == 3
+    assert cluster.events.index("late-sample-created") < cluster.events.index("worker-drained")
+    assert cluster.events.index("worker-drained") < cluster.events.index("sample-scale")
+    assert cluster.events.index("samples-drained") < cluster.events.index("control-scale")
+    assert all(0 < value <= 5 for value in cluster.request_timeouts)
+    assert "Stopped owned workloads" in capsys.readouterr().out
+    local.down(cfg)
+    assert cluster.events.count("control-scale") == 2
+
+
+def test_worker_timeout_prevents_sample_and_control_shutdown(cfg, monkeypatch, capsys):
+    cluster = Cluster(worker_frames=[(7, 1, [pod()])])
+    monkeypatch.setattr(local, "kube", cluster)
+    wait = local.wait_for_worker_drain
+    monkeypatch.setattr(local, "wait_for_worker_drain", lambda cfg: wait(cfg, timeout_seconds=1))
+    with pytest.raises(TimeoutError, match="worker"):
+        local.down(cfg)
+    assert "sample-scale" not in cluster.events and "control-scale" not in cluster.events
+    assert "Stopped owned workloads" not in capsys.readouterr().out
+
+
+def test_sample_timeout_has_nonzero_cli_exit_and_keeps_control_stack(cfg, monkeypatch, capsys):
+    cluster = Cluster(worker_frames=[(7, 0, [])], sample_never_stops=True)
+    monkeypatch.setattr(local, "kube", cluster)
+    wait = local.wait_for_sample_drain
+    monkeypatch.setattr(local, "wait_for_sample_drain", lambda cfg: wait(cfg, timeout_seconds=1))
+    monkeypatch.setattr(local, "config", lambda _: cfg)
+    monkeypatch.setattr(local.sys, "argv", ["manage.py", "down"])
+    monkeypatch.setattr(local, "signal", SimpleNamespace(SIGTERM=15, signal=lambda *args: None))
+    assert local.main() == 1
+    assert "sample-scale" in cluster.events and "control-scale" not in cluster.events
+    assert "Stopped owned workloads" not in capsys.readouterr().out
+
+
+def test_drain_api_failure_does_not_continue_shutdown(cfg, monkeypatch, capsys):
+    cluster = Cluster(worker_frames=[(7, 0, [])])
+
+    def unavailable(cfg, *args, **kwargs):
+        if "get" in args:
+            raise OSError("synthetic API outage")
+        return cluster(cfg, *args, **kwargs)
+
+    monkeypatch.setattr(local, "kube", unavailable)
+    with pytest.raises(OSError):
+        local.down(cfg)
+    assert cluster.events == ["worker-scale"]
+    assert "Stopped owned workloads" not in capsys.readouterr().out
+
+
+def test_drain_rejects_malformed_resource_lists(cfg, monkeypatch):
+    monkeypatch.setattr(local, "kube", lambda *args, **kwargs: "{}")
+    with pytest.raises(ValueError, match="resource list"):
+        local.wait_for_sample_drain(cfg, timeout_seconds=1)
+
+
+def test_drain_rejects_a_concurrent_worker_restart(cfg, monkeypatch):
+    def changed_target(_cfg, *args, **kwargs):
+        if "deployment" in args:
+            return json.dumps(
+                {
+                    "metadata": {"generation": 8},
+                    "spec": {"replicas": 1},
+                    "status": {"observedGeneration": 8, "replicas": 0},
+                }
+            )
+        return json.dumps({"items": []})
+
+    monkeypatch.setattr(local, "kube", changed_target)
+    with pytest.raises(ValueError, match="replica target changed"):
+        local.wait_for_worker_drain(cfg, timeout_seconds=1)
+
+
+def test_sample_drain_waits_for_controller_even_when_no_pods_exist(cfg, monkeypatch):
+    polls = []
+
+    def pending_controller(_cfg, *args, **kwargs):
+        if "deployments" in args:
+            polls.append("controller")
+            return json.dumps(
+                {
+                    "items": [
+                        {
+                            "metadata": {"generation": 4},
+                            "spec": {"replicas": 0},
+                            "status": {"observedGeneration": 3, "replicas": 0},
+                        }
+                    ]
+                }
+            )
+        return json.dumps({"items": []})
+
+    monkeypatch.setattr(local, "kube", pending_controller)
+    with pytest.raises(TimeoutError, match="sample"):
+        local.wait_for_sample_drain(cfg, timeout_seconds=1)
+    assert len(polls) == 2
+
+
+def test_real_build_selects_server_runtime_stage_only(cfg, monkeypatch):
+    calls = []
+    monkeypatch.setattr(local, "time", SimpleNamespace(time=lambda: 1))
+    monkeypatch.setattr(local, "existing_record", lambda _: cfg.copy())
+    monkeypatch.setattr(local, "save", lambda *args: None)
+    monkeypatch.setattr(local, "render", lambda *args: Path("/synthetic/rendered.yaml"))
+    monkeypatch.setattr(local, "kube", lambda *args, **kwargs: "")
+
+    def execute(argv, capture=False):
+        calls.append(argv)
+        return "4edf55d4c943e4378534399191fae04046a58091" if argv[0] == "git" else ""
+
+    monkeypatch.setattr(local, "run", execute)
+    local.up(cfg)
+    builds = [argv for argv in calls if argv[:2] == ["docker", "build"]]
+    assert len(builds) == 3
+    server = next(argv for argv in builds if "infra/docker/server.Dockerfile" in argv)
+    assert server[server.index("--target") + 1] == "runtime"
+    assert all("--target" not in argv for argv in builds if argv is not server)
+    assert all(argv[-1] == "." for argv in builds)

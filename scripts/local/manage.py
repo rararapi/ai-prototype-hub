@@ -182,6 +182,82 @@ def kube(cfg: dict, *args: str, capture: bool = False) -> str:
     return run(["kubectl", "--context", "kind-" + cfg["name"], *args], capture)
 
 
+def wait_for_drain(
+    cfg: dict,
+    namespace: str,
+    selector: str,
+    *,
+    worker: bool = False,
+    timeout_seconds: float = 90,
+) -> None:
+    """Observe scaled controllers and Pod absence before the next shutdown step."""
+    stage = "worker" if worker else "sample"
+    deadline = time.monotonic() + timeout_seconds
+    print(f"Waiting for {stage} Pods to stop...", flush=True)
+
+    def read(*args: str) -> dict:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError(f"Timed out draining {stage} Pods; shutdown is incomplete")
+        request_timeout = f"{max(0.001, min(5, remaining)):.3f}s"
+        value = json.loads(
+            kube(
+                cfg,
+                f"--request-timeout={request_timeout}",
+                "-n",
+                namespace,
+                *args,
+                "-o",
+                "json",
+                capture=True,
+            )
+        )
+        if not isinstance(value, dict):
+            raise ValueError("Invalid Kubernetes drain response")
+        return value
+
+    while True:
+        deployments = (
+            [read("get", "deployment", "worker")]
+            if worker
+            else read("get", "deployments", "-l", selector).get("items")
+        )
+        pods = read("get", "pods", "-l", selector).get("items")
+        if not isinstance(deployments, list) or not isinstance(pods, list):
+            raise ValueError("Invalid Kubernetes drain resource list")
+        controllers_stopped = True
+        for deployment in deployments:
+            generation = deployment["metadata"]["generation"]
+            if deployment["spec"].get("replicas", 1) != 0:
+                raise ValueError(f"The {stage} replica target changed during shutdown")
+            status = deployment.get("status") or {}
+            controllers_stopped = controllers_stopped and (
+                status.get("observedGeneration", 0) >= generation
+                and (status.get("replicas") or 0) == 0
+            )
+        if controllers_stopped and not pods:
+            return
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError(f"Timed out draining {stage} Pods; shutdown is incomplete")
+        time.sleep(min(0.5, remaining))
+
+
+def wait_for_worker_drain(cfg: dict, timeout_seconds: float = 90) -> None:
+    wait_for_drain(
+        cfg, "protohub-system", "app=protohub-worker", worker=True, timeout_seconds=timeout_seconds
+    )
+
+
+def wait_for_sample_drain(cfg: dict, timeout_seconds: float = 90) -> None:
+    wait_for_drain(
+        cfg,
+        "protohub-samples",
+        "app.kubernetes.io/managed-by=protohub",
+        timeout_seconds=timeout_seconds,
+    )
+
+
 def verify_kind(cfg: dict, allow_incomplete: bool = False) -> bool:
     clusters = run(["kind", "get", "clusters"], True).splitlines()
     if cfg["name"] not in clusters:
@@ -330,19 +406,19 @@ def up(cfg: dict) -> None:
             ("web", "infra/docker/web.Dockerfile"),
             ("hello-web", "examples/hello-web/Dockerfile"),
         ):
-            run(
-                [
-                    "docker",
-                    "build",
-                    "-f",
-                    dockerfile,
-                    "-t",
-                    f"protohub/{image}:{tag}",
-                    "--label",
-                    "org.opencontainers.image.revision=" + revision,
-                    ".",
-                ]
-            )
+            build_args = [
+                "docker",
+                "build",
+                "-f",
+                dockerfile,
+                "-t",
+                f"protohub/{image}:{tag}",
+                "--label",
+                "org.opencontainers.image.revision=" + revision,
+            ]
+            if image == "server":
+                build_args.extend(["--target", "runtime"])
+            run([*build_args, "."])
         run(
             [
                 "kind",
@@ -389,6 +465,7 @@ def down(cfg: dict) -> None:
             compose(cfg, "down", "--remove-orphans")
     elif verify_kind(cfg):
         kube(cfg, "-n", "protohub-system", "scale", "deployment/worker", "--replicas=0")
+        wait_for_worker_drain(cfg)
         kube(
             cfg,
             "-n",
@@ -399,6 +476,7 @@ def down(cfg: dict) -> None:
             "app.kubernetes.io/managed-by=protohub",
             "--replicas=0",
         )
+        wait_for_sample_drain(cfg)
         kube(
             cfg,
             "-n",
