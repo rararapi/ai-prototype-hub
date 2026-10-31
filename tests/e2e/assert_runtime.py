@@ -243,7 +243,7 @@ try:
                 "set",
                 "env",
                 "deployment/worker",
-                "PROTOHUB_SAMPLE_IMAGE=protohub/hello-web:missing-test-image",
+                "PROTOHUB_SAMPLE_IMAGE=protohub.invalid/hello-web:missing-test-image",
                 "PROTOHUB_OPERATION_TIMEOUT_SECONDS=90",
             )
             kube("rollout", "status", "deployment/worker", "--timeout=180s")
@@ -356,7 +356,7 @@ try:
                 "set",
                 "env",
                 "deployment/worker",
-                "PROTOHUB_SAMPLE_IMAGE=protohub/hello-web:missing-test-image",
+                "PROTOHUB_SAMPLE_IMAGE=protohub.invalid/hello-web:missing-test-image",
                 "PROTOHUB_OPERATION_TIMEOUT_SECONDS=5",
             )
             kube("rollout", "status", "deployment/worker", "--timeout=180s")

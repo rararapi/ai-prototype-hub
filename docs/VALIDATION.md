@@ -80,6 +80,7 @@ rolloutだけを公開経路の復旧とは扱わず、同じUUIDの保持レコ
 後続leaseテストも旧worker Pod消失と唯一のReady/Running holderを確認してからenqueueし、
 実UIDを再照合して終了します。部分失敗とtimeoutはServiceを含む全資源回収を検査し、
 timeoutのerror codeも明示確認します。実観測を待つ変更であり、mutation再送やassertion削除はしません。
+負荷注入のmissing imageは予約済み`.invalid` registryへ固定し、外部公開tagの不在には依存しません。
 
 ## 2026-10-30時点の証跡（履歴）
 
