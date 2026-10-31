@@ -27,7 +27,7 @@ class Blocked(Exception):
     pass
 
 
-def run(argv: list[str], capture: bool = False) -> str:
+def run(argv: list[str], capture: bool = False, *, timeout_seconds: float | None = None) -> str:
     result = subprocess.run(
         argv,
         cwd=ROOT,
@@ -35,6 +35,7 @@ def run(argv: list[str], capture: bool = False) -> str:
         stdin=subprocess.DEVNULL,
         text=True,
         stdout=subprocess.PIPE if capture else None,
+        timeout=timeout_seconds,
     )
     return result.stdout.strip() if capture else ""
 
@@ -178,8 +179,11 @@ def verify_compose(cfg: dict) -> bool:
     return exists
 
 
-def kube(cfg: dict, *args: str, capture: bool = False) -> str:
-    return run(["kubectl", "--context", "kind-" + cfg["name"], *args], capture)
+def kube(cfg: dict, *args: str, capture: bool = False, timeout_seconds: float | None = None) -> str:
+    command = ["kubectl", "--context", "kind-" + cfg["name"], *args]
+    if timeout_seconds is None:
+        return run(command, capture)
+    return run(command, capture, timeout_seconds=timeout_seconds)
 
 
 def wait_for_drain(
@@ -200,8 +204,8 @@ def wait_for_drain(
         if remaining <= 0:
             raise TimeoutError(f"Timed out draining {stage} Pods; shutdown is incomplete")
         request_timeout = f"{max(0.001, min(5, remaining)):.3f}s"
-        value = json.loads(
-            kube(
+        try:
+            raw = kube(
                 cfg,
                 f"--request-timeout={request_timeout}",
                 "-n",
@@ -210,8 +214,11 @@ def wait_for_drain(
                 "-o",
                 "json",
                 capture=True,
+                timeout_seconds=remaining,
             )
-        )
+        except subprocess.TimeoutExpired:
+            raise TimeoutError(f"Timed out draining {stage} Pods; shutdown is incomplete") from None
+        value = json.loads(raw)
         if not isinstance(value, dict):
             raise ValueError("Invalid Kubernetes drain response")
         return value

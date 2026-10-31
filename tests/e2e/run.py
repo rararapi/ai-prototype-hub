@@ -4,12 +4,13 @@ import argparse
 import json
 import os
 import signal
-import socket
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from uuid import uuid4
+
+from fixture_ports import PortSelectionError, choose_fixture_ports
 
 root = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser()
@@ -19,15 +20,10 @@ args = parser.parse_args()
 name = f"protohub-{args.gate}-" + uuid4().hex[:10]
 
 
-def port():
-    with socket.socket() as listener:
-        listener.bind(("127.0.0.1", 0))
-        return listener.getsockname()[1]
-
-
-console, preview = port(), port()
-while preview == console:
-    preview = port()
+try:
+    console, preview = choose_fixture_ports()
+except PortSelectionError as exc:
+    parser.exit(1, f"FAIL {args.gate}: {exc}\n")
 env = {
     **os.environ,
     "PROTOHUB_MODE": "real-kind",

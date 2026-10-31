@@ -2,6 +2,9 @@
 
 import importlib.util
 import json
+import subprocess
+import sys
+import time
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -44,8 +47,9 @@ class Cluster:
         self.scaled_samples = set()
         self.events = []
         self.request_timeouts = []
+        self.process_timeouts = []
 
-    def __call__(self, cfg, *args, capture=False):
+    def __call__(self, cfg, *args, capture=False, timeout_seconds=None):
         namespace = args[args.index("-n") + 1]
         if "scale" in args:
             assert not capture
@@ -60,6 +64,7 @@ class Cluster:
                 self.events.append("control-scale")
             return ""
         assert capture and "get" in args
+        self.process_timeouts.append(timeout_seconds)
         timeout = next(value for value in args if value.startswith("--request-timeout="))
         self.request_timeouts.append(float(timeout.split("=")[1][:-1]))
         resource = args[args.index("get") + 1]
@@ -131,6 +136,7 @@ def test_down_drains_worker_before_stopping_late_sample_and_is_repeatable(cfg, m
     assert cluster.events.index("worker-drained") < cluster.events.index("sample-scale")
     assert cluster.events.index("samples-drained") < cluster.events.index("control-scale")
     assert all(0 < value <= 5 for value in cluster.request_timeouts)
+    assert all(0 < value <= 90 for value in cluster.process_timeouts)
     assert "Stopped owned workloads" in capsys.readouterr().out
     local.down(cfg)
     assert cluster.events.count("control-scale") == 2
@@ -243,3 +249,51 @@ def test_real_build_selects_server_runtime_stage_only(cfg, monkeypatch):
     assert server[server.index("--target") + 1] == "runtime"
     assert all("--target" not in argv for argv in builds if argv is not server)
     assert all(argv[-1] == "." for argv in builds)
+
+
+def test_kube_forwards_optional_timeout_to_subprocess(cfg, monkeypatch):
+    calls = []
+
+    def execute(argv, **kwargs):
+        calls.append((argv, kwargs))
+        return subprocess.CompletedProcess(argv, 0, stdout="{}")
+
+    monkeypatch.setattr(local.subprocess, "run", execute)
+    assert local.kube(cfg, "get", "pods", capture=True, timeout_seconds=1.25) == "{}"
+    assert calls[-1][1]["timeout"] == 1.25
+    assert calls[-1][0][:3] == ["kubectl", "--context", "kind-protohub-test"]
+    local.kube(cfg, "get", "pods", capture=True)
+    assert calls[-1][1]["timeout"] is None
+
+
+def test_stuck_kubectl_process_times_out_and_cli_never_continues_shutdown(cfg, monkeypatch, capsys):
+    events = []
+    process_timeouts = []
+    run_process = subprocess.run
+    real_kube = local.kube
+
+    def stuck_kubectl(argv, **kwargs):
+        assert argv[0] == "kubectl"
+        process_timeouts.append(kwargs["timeout"])
+        # This real child models hung discovery/retries independently of HTTP timeouts.
+        return run_process([sys.executable, "-c", "import time; time.sleep(30)"], **kwargs)
+
+    def observe(cfg, *args, **kwargs):
+        if "scale" in args:
+            events.append(args)
+            return ""
+        return real_kube(cfg, *args, **kwargs)
+
+    monkeypatch.setattr(local.subprocess, "run", stuck_kubectl)
+    monkeypatch.setattr(local, "kube", observe)
+    wait = local.wait_for_worker_drain
+    monkeypatch.setattr(local, "wait_for_worker_drain", lambda cfg: wait(cfg, timeout_seconds=0.1))
+    monkeypatch.setattr(local, "config", lambda _: cfg)
+    monkeypatch.setattr(local.sys, "argv", ["manage.py", "down"])
+    monkeypatch.setattr(local, "signal", SimpleNamespace(SIGTERM=15, signal=lambda *args: None))
+    started = time.monotonic()
+    assert local.main() == 1
+    assert time.monotonic() - started < 3
+    assert process_timeouts == [0.1]
+    assert len(events) == 1 and "deployment/worker" in events[0]
+    assert "Stopped owned workloads" not in capsys.readouterr().out
