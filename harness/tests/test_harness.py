@@ -596,6 +596,7 @@ class DoctorTests(unittest.TestCase):
         operation="start",
     ):
         commands = []
+        self.server_queries = []
 
         def fake_run(argv, **kwargs):
             commands.append(argv)
@@ -605,8 +606,12 @@ class DoctorTests(unittest.TestCase):
             elif argv[:3] == ["docker", "context", "inspect"]:
                 stdout, returncode = json.dumps(endpoint), int(inspect_fails)
             elif argv[:2] == ["docker", "info"]:
-                stdout = cgroup if argv[-1] == "{{.CgroupVersion}}" else server
+                raise AssertionError("Doctor must not execute Docker CLI info")
             return subprocess.CompletedProcess(argv, returncode, stdout, "")
+
+        def fake_info(socket_path):
+            self.server_queries.append(socket_path)
+            return {"OSType": server, "CgroupVersion": cgroup}
 
         output = io.StringIO()
         with (
@@ -621,6 +626,7 @@ class DoctorTests(unittest.TestCase):
                 ),
             ),
             mock.patch.object(doctor.subprocess, "run", side_effect=fake_run),
+            mock.patch.object(doctor, "read_docker_info", side_effect=fake_info),
             mock.patch("sys.stdout", output),
         ):
             code = doctor.main(["--mode", mode, "--operation", operation])
@@ -629,7 +635,7 @@ class DoctorTests(unittest.TestCase):
     def test_saved_context_with_local_socket_passes_without_context_mutation(self):
         code, output, commands = self.call_doctor()
         self.assertEqual(code, 0)
-        self.assertTrue(any(command[:2] == ["docker", "info"] for command in commands))
+        self.assertEqual(self.server_queries, ["/var/run/docker.sock"])
         self.assertFalse(any(command[:3] == ["docker", "context", "use"] for command in commands))
         self.assertNotIn("/var/run/docker.sock", output)
         self.assertNotIn("saved-context", output)
@@ -642,7 +648,7 @@ class DoctorTests(unittest.TestCase):
             with self.subTest(endpoint=endpoint):
                 code, output, commands = self.call_doctor({"DOCKER_HOST": endpoint})
                 self.assertEqual(code, 2)
-                self.assertFalse(any(command[:2] == ["docker", "info"] for command in commands))
+                self.assertEqual(self.server_queries, [])
                 self.assertNotIn(endpoint, output)
                 self.assertNotIn("credential", output)
 
@@ -651,6 +657,7 @@ class DoctorTests(unittest.TestCase):
             {"DOCKER_CONTEXT": "chosen-local", "DOCKER_HOST": "ssh://remote.example"}
         )
         self.assertEqual(code, 0)
+        self.assertEqual(self.server_queries, ["/var/run/docker.sock"])
         self.assertTrue(
             any(
                 command[:3] == ["docker", "context", "inspect"] and command[-1] == "chosen-local"
@@ -665,7 +672,7 @@ class DoctorTests(unittest.TestCase):
             endpoint="ssh://remote.example",
         )
         self.assertEqual(code, 2)
-        self.assertFalse(any(command[:2] == ["docker", "info"] for command in commands))
+        self.assertEqual(self.server_queries, [])
 
     def test_docker_host_overrides_saved_context(self):
         code, _, commands = self.call_doctor(
@@ -673,12 +680,13 @@ class DoctorTests(unittest.TestCase):
             endpoint="tcp://remote.example:2376",
         )
         self.assertEqual(code, 0)
+        self.assertEqual(self.server_queries, ["/run/user/1000/docker.sock"])
         self.assertFalse(any(command[:2] == ["docker", "context"] for command in commands))
 
     def test_remote_saved_context_is_blocked(self):
         code, _, commands = self.call_doctor(endpoint="tcp://remote.example:2376")
         self.assertEqual(code, 2)
-        self.assertFalse(any(command[:2] == ["docker", "info"] for command in commands))
+        self.assertEqual(self.server_queries, [])
 
     def test_unverifiable_or_malformed_endpoint_is_blocked(self):
         for endpoint in (
@@ -691,11 +699,11 @@ class DoctorTests(unittest.TestCase):
             with self.subTest(endpoint=endpoint):
                 code, output, commands = self.call_doctor(endpoint=endpoint)
                 self.assertEqual(code, 2)
-                self.assertFalse(any(command[:2] == ["docker", "info"] for command in commands))
+                self.assertEqual(self.server_queries, [])
                 self.assertNotIn("credential", output)
         code, _, commands = self.call_doctor(inspect_fails=True)
         self.assertEqual(code, 2)
-        self.assertFalse(any(command[:2] == ["docker", "info"] for command in commands))
+        self.assertEqual(self.server_queries, [])
 
     def test_missing_docker_and_non_linux_server_are_blocked(self):
         self.assertEqual(self.call_doctor(missing_docker=True)[0], 2)
@@ -712,17 +720,17 @@ class DoctorTests(unittest.TestCase):
         code, output, commands = self.call_doctor(cgroup="1", mode="kind")
         self.assertEqual(code, 2)
         self.assertIn("requires cgroup v2", output)
-        self.assertIn(["docker", "info", "--format", "{{.CgroupVersion}}"], commands)
+        self.assertEqual(self.server_queries, ["/var/run/docker.sock"])
         cleanup_code, _, cleanup_commands = self.call_doctor(
             cgroup="1", mode="kind", operation="cleanup"
         )
         self.assertEqual(cleanup_code, 0)
-        self.assertNotIn(["docker", "info", "--format", "{{.CgroupVersion}}"], cleanup_commands)
+        self.assertEqual(self.server_queries, ["/var/run/docker.sock"])
 
     def test_kind_never_contacts_remote_daemon_even_for_cgroup_probe(self):
         code, _, commands = self.call_doctor(endpoint="ssh://remote.example", mode="kind")
         self.assertEqual(code, 2)
-        self.assertFalse(any(command[:2] == ["docker", "info"] for command in commands))
+        self.assertEqual(self.server_queries, [])
 
 
 if __name__ == "__main__":
