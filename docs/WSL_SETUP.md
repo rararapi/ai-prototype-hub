@@ -57,7 +57,10 @@ Docker権限、企業VPN、proxy、firewallの制約があるときは原因を�
 
 ## リポジトリ
 
-まだcloneしていない場合にWSLのLinux側の作業ディレクトリで実行する:
+今回の実装ブランチは依頼に従って未pushです。現在のローカル成果物を使う場合は、
+[READMEのローカルブランチ取得手順](../README.md) に従い、Windows側のこのrepositoryから
+`codex/protohub-local-mvp` をWSLのLinux filesystemへcloneしてください。
+以下のGitHub取得例は、必要な実装が公開先へ反映されている場合に使います:
 
 ```bash
 git clone https://github.com/rararapi/ai-prototype-hub.git
@@ -90,8 +93,10 @@ docker info --format '{{.CgroupVersion}}'
 make doctor-kind
 ```
 
-real-kindには結果が`2`であることが必要です。今回のDocker25.0.3環境は`1`で、kubeletが
-起動を拒否したため実Pod/E2E/live RBACはBLOCKEDです。Compose mockはcgroup v1でも検証できます。
+real-kindには結果が`2`であることが必要です。初回のDocker25.0.3環境は`1`で、kubeletが
+起動を拒否しました。2026-10-31の承認済み更新後はEngine29.9.2で`2`を実測し、
+`make doctor-kind`とkind control-plane起動が通りました。最新の実Pod/E2E/live RBACの
+合否は [検証記録](VALIDATION.md) を参照してください。Compose mockはcgroup v1でも検証できます。
 `doctor-kind`は資源作成前に不足を示し、mockへのfallbackや`failCgroupV1`の強制変更を行いません。
 
 Docker Desktop/WSLの更新・設定変更・再起動は他の作業へ影響するため、ユーザーの明示承認を

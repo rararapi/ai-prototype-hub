@@ -1,4 +1,4 @@
-# 開発環境と依存版（2026-10-30 JST）
+# 開発環境と依存版（2026-10-31 JST）
 
 `apps/server/uv.lock` と `apps/web/package-lock.json`、`tests/e2e/package-lock.json` が
 再現用のlockfileです。レジストリが返した安定版を解決し、下記環境で実際の検査を行いました。
@@ -17,12 +17,27 @@ Linuxコンテナと実起動の到達点は [VALIDATION](VALIDATION.md) に分�
 | Vitest / openapi-typescript / Playwright | 5.0.5 / 7.13.0 / 1.64.1 |
 
 ハーネス・doctor・ローカルlauncherはPython 3.10以上の標準ライブラリで動きます。
-WSLはUbuntu 22.04.3 LTS / kernel 5.15.146.1、Docker server 25.0.3、
+初回の2026-10-30検証ではUbuntu 22.04.3 LTS / kernel 5.15.146.1、Docker server 25.0.3、
 Compose v2.24.6、buildx v0.12.1を確認しました。最初はDocker未接続でしたが検証中に接続可能となりました。
-ホストOSのサービス・権限・WSL設定は変更していません。
+その初回検証ではホストOSのサービス・権限・WSL設定は変更していません。
 Docker内のPython3.11.18/Node24.18.0でsource/contract/unit/buildを実行しました。
-Docker daemonのcgroup版は1で、Kubernetes1.37は起動を拒否します。real-kindはcgroup v2が前提です。
+初回Docker daemonのcgroup版は1で、Kubernetes1.37は起動を拒否しました。real-kindはcgroup v2が前提です。
 最初のdoctor-kindではこの条件を見落としていたため、実失敗後に事前検出を実装・検査しました。
+
+2026-10-31、利用者の明示承認とPC側UAC許可を受け、既存WSL/Docker Desktopを更新しました。
+更新前にDB archive、設定、Docker data/main VHDXを退避し、SHA256を照合しました。
+更新後はWSL 3.0.3.0 / kernel 6.18.54.1-1、Docker Desktop 4.97.0.244584、
+Engine 29.9.2、Compose 5.6.1、buildx 0.38.1を確認しています。実daemonはcgroup **2**、
+cgroupfs、overlay2です。全5既存volumeの同一性、別用途の停止済みcontainer、mock DBの
+行数とHTTP応答を確認しました。Windows全体の再起動やcgroup強制回避は行っていません。
+kind/実Pod/ブラウザの最新合否は [VALIDATION](VALIDATION.md) を参照してください。
+Dev Container専用の [検証記録](DEV_CONTAINER.md#この構成自体の検証状況) にあるcgroup v1と
+OS未変更の記載は2026-10-30当日の履歴です。この承認済み更新とは時点を分けて扱います。
+
+更新版は公式 [WSL 3.0.3](https://github.com/microsoft/WSL/releases/tag/3.0.3) と
+[Docker Desktop 4.97.0](https://docs.docker.com/desktop/release-notes/#4970) の配布物を使用し、
+公式checksumとMicrosoft/DockerのAuthenticode署名を照合しました。ここに記載する版は
+今回の実測であり、全PCへの自動更新や新しい利用条件の自動承諾を意味しません。
 
 | コンテナ/ツール | 採用した固定参照 |
 |---|---|

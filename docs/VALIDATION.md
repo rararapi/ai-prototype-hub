@@ -1,4 +1,4 @@
-# 実装・検証記録（2026-10-30 JST）
+# 実装・検証記録（2026-10-31 JST）
 
 対象ブランチは `codex/protohub-local-mvp` です。GitHubへのpush/PR/merge、公開、
 クラウド作成は行っていません。各担当のhandoffだけを合格証拠にはせず、親が統合コードを検証します。
@@ -9,9 +9,48 @@
 WSL2 Ubuntu22.04のLinux filesystem上に一時検証コピーを作り、make4.3/kind0.33/kubectl1.37を
 その検証用binへ配置しました。kind/kubectlは公式チェックサムを照合しました。makeは既存Ubuntuと
 同じ22.04の検証用コンテナで用意し、バイナリだけを一時領域へ取り出しました。
-ホストOSへのインストール・WSL設定変更・権限変更・Docker再起動は行っていません。
+この2026-10-30の初回検証ではホストOSへのインストール・WSL設定変更・権限変更・Docker再起動は行っていません。
 
-## 現在までの証跡
+## 2026-10-31の承認済み環境更新と再検証
+
+利用者の明示承認とWindows UAC許可により、WSL3.0.3.0とDocker Desktop4.97.0へ
+既存インストールを更新しました。両installerは公式checksum/署名を照合し、終了codeは0。
+更新前のDB archive検査とDocker data/main VHDXのオフラインcopy/hash照合はPASSです。
+更新後は実daemonのcgroup **2**、Engine29.9.2、kernel6.18.54.1-1を実測しました。
+全5既存volumeの属性と、別用途の停止済みcontainer ID/stateを照合し、mockの既存DB行数と
+HTTP応答もPASSです。証跡は `.harness/reports/cgroup-v2-20261031/` に保持します。
+
+初回real起動でserver imageの最終checks stageを誤って使い、API migrationが失敗しました。
+`5575c23`でruntime targetを明示し、停止時のworker drain競合も回帰テストとともに修正。
+既存kind/PVCを保持して再検証しました。初回full `20261031T082906Z-cade2abf`は
+既知の不具合を繰り返す前に中断した記録であり、合格には数えません。
+この失敗時点の結果を全体の受入完了とは扱いません。
+
+同日の対話ブラウザでは、Windows localhostのreal-kind画面から登録→起動→Ready→
+サンプルURLを開く→counterの0→1→停止→同じアプリの再起動→削除を操作しました。
+Ready時の実Pod/Service、停止時のPod消失、削除完了後のPod/Service消失をkubectlで照合しました。
+画面はmockではありません。
+ブラウザ画像とWindows HTTP結果は同maintenance directoryの`console-real.png`、
+`sample-real.png`、`windows-browser.json`です。これだけで全自動E2E合格とは扱いません。
+
+再検証full `20261031T083523Z-ef7fa992`のE2E初回fixtureは、WSLが選んだport58867が
+Windows予約58828〜58927に含まれるため、Dockerのport公開で失敗しました。
+OSの予約範囲は変更せず、`dc7fc38`でfixture側のconsole/preview候補を20000〜29999から
+最大128回で選ぶ修正を行いました。実占有socketを含む7回帰検査と独立レビューはPASS。
+選択後の競合や全てのWindows予約範囲を完全防止する仕組みではなく、後発の公開失敗は
+明示的に失敗します。kind API serverの自動portは変更していません。
+失敗レポートと所有済みfixtureのcleanup記録は保持します。
+
+この`5575c23`でのfullは11gate中、E2E以外の10gateがPASSしました。実PostgreSQLは4テスト、
+live securityは独立fixtureで5項目がPASSし、各fixtureの所有を照合して回収しました。
+同commitのE2Eだけは上記port予約でFAILです。`dc7fc38`は停止待ちのsubprocess自体へも
+期限を渡し、実際に固まったchildを使う回帰を追加しています。launcherの28テストがPASS。
+
+この文書を含む統合HEADで`make verify`を実行し直します。最終合否は、そのコマンドが表示する
+正確な `.harness/reports/<run_id>/report.json` の全gate、complete、中断有無、実行前後の
+source fingerprintで判定します。過去PASSの流用や、ブラウザの手動確認によるE2E代替はしません。
+
+## 2026-10-30時点の証跡（履歴）
 
 | 対象 | 結果 | 証跡 |
 |---|---|---|
@@ -69,5 +108,5 @@ API/worker/provider単体、実PostgreSQLテスト、実kind/Playwright検証を
 CNIによる敵対的通信隔離、任意コード、実組織SSO、LLM接続は未対応です。
 静的hygieneはbest-effortであり秘密検出の完全保証ではありません。LICENSEは未選定です。
 GitHub CIの定義は実装済みですが、pushしない依頼なのでGitHub上でのCI実行は未実施です。
-次の環境作業はDocker/WSLのcgroup v2化（必要なら更新・再起動）で、明示承認が必要です。
-その後にreal-kindの未実証項目を再検証します。AI-DLC製品機能、OIDC、AKS等は別フェーズです。
+Docker/WSLのcgroup v2化は2026-10-31に承認を受けて実施しました。上記の新しい記録に
+従ってreal-kindを再検証します。AI-DLC製品機能、OIDC、AKS等は別フェーズです。

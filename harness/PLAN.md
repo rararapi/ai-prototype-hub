@@ -79,6 +79,20 @@ mock remains a separate Compose alternative. Source/config audits by Backend and
 concrete sample UI/design audit by Frontend inform generation and final review.
 
 Final integrated make/check/full evidence follows in `.harness/reports/` and docs/VALIDATION.md.
-Real sample Pod/HTTP/lifecycle, real Playwright and live RBAC remain BLOCKED until cgroup v2.
-Do not mark full acceptance complete or convert these checks into mock passes.
+On 2026-10-31 the human authorized WSL/Docker Desktop updates and approved UAC on the PC.
+Both installers exited 0. Offline DB/VHDX backups, all five baseline volumes and the unrelated
+stopped container were verified; mock DB counts and HTTP recovery passed. Engine29.9.2 now
+reports cgroup2 and kind control-plane starts. Initial real bootstrap exposed an incorrect
+server Docker build target, and review found a worker shutdown race; both are fixed with
+regressions in 5575c23. Current scoped work is real-kind-completion-20261031. The interrupted
+initial full report remains evidence of that attempt, not a PASS. Real lifecycle/browser/live
+RBAC and final full acceptance must follow the current report; no mock substitution is allowed.
+
+Real validation follow-up: browser register/start/Ready/counter/stop/restart/delete passed,
+with actual sample Pod/Service existence and removal observed. Full 20261031T083523Z-ef7fa992
+at 5575c23 passed 10 of 11 gates, including four real PostgreSQL tests and five live security
+checks. E2E's fixture port58867 conflicted with Windows reservations; owned cleanup succeeded.
+dc7fc38 adds bounded non-ephemeral fixture port selection and wall-clock subprocess limits
+for drain; launcher28 and port7 regressions plus independent reviews passed. Re-run full on
+the integrated documentation/source HEAD and record that exact report before workflow finish.
 
