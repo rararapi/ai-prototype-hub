@@ -123,3 +123,11 @@ the same retained record, stabilizes the sole worker holder before enqueue/death
 and strengthens failed/timeout cleanup to all owned resources plus the exact timeout code.
 No whole-scenario retries or contract changes are introduced. Final full/review must match HEAD.
 
+At515c789 / 20261031T100446Z-4e908c19, browser1/1 + real runtime8 + live security5 all passed,
+but both gates correctly failed because cleanup's CLI-info probe timed out before deletion.
+New scope doctor-server-metadata-20261031 replaces only server capability reads with one
+verified AF_UNIX GET/info, absolute12s/1MiB bounds and no TCP/auth/proxy/CLI fallback; all
+context, tool, mode and ownership guards remain. 5d3ae05 passed107/107 WSL harness tests,
+live doctor-kind, and exact normal guarded cleanup of the two retained fixtures. Full on the
+integrated HEAD is still required; earlier functional PASS counts do not complete acceptance.
+

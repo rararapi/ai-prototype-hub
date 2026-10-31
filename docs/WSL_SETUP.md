@@ -61,6 +61,12 @@ Docker権限、企業VPN、proxy、firewallの制約があるときは原因を�
 選択endpointを読み取り確認してください。同じ失敗を無制限に再試行せず、応答復帰を確認して
 所有記録が一致する残存fixtureだけを回収します。この事例では追加OS設定・権限変更・再起動は不要でした。
 
+doctorのserver判定は、確認済みローカルUnix socketへの読み取り専用`GET /info`を1回使います。
+Docker CLIのcontext優先順位と`DOCKER_CONFIG`を尊重し、remote/TCPは接続前に拒否します。
+総I/O期限12秒・応答1MiB上限でLinux/cgroup能力だけを判定し、失敗時はBLOCKEDです。
+CLIへのfallback、接続先変更、権限変更は行いません。kind削除前の完全ID・作成receipt・namespace所有検査も維持します。
+参照: [Docker Engine API](https://docs.docker.com/reference/api/engine/)。
+
 ## リポジトリ
 
 今回の実装ブランチは依頼に従って未pushです。現在のローカル成果物を使う場合は、

@@ -82,6 +82,17 @@ rolloutだけを公開経路の復旧とは扱わず、同じUUIDの保持レコ
 timeoutのerror codeも明示確認します。実観測を待つ変更であり、mutation再送やassertion削除はしません。
 負荷注入のmissing imageは予約済み`.invalid` registryへ固定し、外部公開tagの不在には依存しません。
 
+`515c789`のfull `20261031T100446Z-4e908c19`では、ブラウザ1/1、実runtime8項目、
+live security5項目が全てPASSしました。ただし両fixtureの回収前にCLI版`docker info`が
+12秒でtimeoutし、E2E/securityゲート全体はFAILです。機能検査だけを全体PASSに置き換えません。
+`5d3ae05`でdoctorを確認済みUnix socketの読み取り専用metadataへ変更しました。
+接続先・Linux・cgroup・所有検査を維持し、期限/サイズ/不正応答/slow-drip/非local拒否を含む
+WSLハーネステスト107/107がPASSです。同commitの実`make doctor-kind`もPASSし、
+元の完全node ID・作成receipt・所有を確認して残存2fixtureだけを通常guard付きで回収しました。
+証跡は `.harness/reports/doctor-server-metadata-20261031/` の`live-doctor.log`、
+`harness-self-final.log`、`exact-recovery.json`です。日常用kindと既存volumeは保持しています。
+この修正を含む統合HEADの全11ゲートを、改めて同じ`make verify`入口で確認します。
+
 ## 2026-10-30時点の証跡（履歴）
 
 | 対象 | 結果 | 証跡 |
