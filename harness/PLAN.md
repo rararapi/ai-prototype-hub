@@ -116,3 +116,10 @@ native plugin/socket/daemon probes confirmed recovery; the exact retained node w
 removed using its original ID/receipt and normal ownership guard. Recovery cleanup PASS;
 daily resources retained, no additional OS restart/config/permission change was needed.
 
+Full f3a8289 / 20261031T093017Z-4a52d79b passed10/11, including browser1/1 and live security5.
+The remaining E2E runtime check observed public502 immediately after API rollout; owned cleanup
+succeeded. New bounded scope real-public-readiness-20261031 waits for actual HTTP recovery of
+the same retained record, stabilizes the sole worker holder before enqueue/death injection,
+and strengthens failed/timeout cleanup to all owned resources plus the exact timeout code.
+No whole-scenario retries or contract changes are introduced. Final full/review must match HEAD.
+

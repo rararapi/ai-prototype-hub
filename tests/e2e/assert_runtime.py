@@ -104,6 +104,23 @@ def no_pods(sandbox_id):
     return not any(item["kind"] == "Pod" for item in resources(sandbox_id))
 
 
+def sole_ready_worker():
+    pods = json.loads(kube("get", "pods", "-l", "app=protohub-worker", "-o", "json"))["items"]
+    if len(pods) != 1:
+        return None
+    pod = pods[0]
+    if (
+        pod["metadata"].get("deletionTimestamp") is not None
+        or pod["status"].get("phase") != "Running"
+        or not any(
+            condition["type"] == "Ready" and condition["status"] == "True"
+            for condition in pod["status"].get("conditions", [])
+        )
+    ):
+        return None
+    return pod
+
+
 def passed(name):
     checks.append({"name": name, "status": "PASS"})
     print("PASS real " + name, flush=True)
@@ -216,7 +233,7 @@ try:
         status(queued, "running")
         kube("rollout", "restart", "deployment/api")
         kube("rollout", "status", "deployment/api", "--timeout=180s")
-        assert api(f"/sandboxes/{queued}")["name"] == "Worker recovery"
+        wait(lambda: api(f"/sandboxes/{queued}")["name"] == "Worker recovery", timeout=120)
         passed("queue recovery and API/worker restart persistence")
 
         config = json.loads(kube("get", "configmap", "protohub-config", "-o", "json"))["data"]
@@ -230,17 +247,17 @@ try:
                 "PROTOHUB_OPERATION_TIMEOUT_SECONDS=90",
             )
             kube("rollout", "status", "deployment/worker", "--timeout=180s")
+            worker_pod = wait(sole_ready_worker, timeout=120)
+            worker_uid = worker_pod["metadata"]["uid"]
             operation = api(f"/sandboxes/{recovery}/start", "POST")
             wait(lambda: api(f"/operations/{operation['id']}")["status"] == "running")
             assert api(f"/operations/{operation['id']}")["attempt_count"] == 1
-            pods = json.loads(kube("get", "pods", "-l", "app=protohub-worker", "-o", "json"))[
-                "items"
-            ]
-            assert len(pods) == 1 and pods[0]["metadata"]["labels"]["app"] == "protohub-worker"
+            current_worker = sole_ready_worker()
+            assert current_worker is not None and current_worker["metadata"]["uid"] == worker_uid
             kube(
                 "delete",
                 "pod",
-                pods[0]["metadata"]["name"],
+                worker_pod["metadata"]["name"],
                 "--grace-period=0",
                 "--force",
                 "--wait=false",
@@ -311,7 +328,7 @@ try:
             api(f"/sandboxes/{partial}/start", "POST")
             status(partial, "failed")
             assert api(f"/sandboxes/{partial}")["error"]
-            wait(lambda: no_pods(partial))
+            wait(lambda: not resources(partial), timeout=120)
             assert http(f"/apps/{partial}/", base=preview)[0] in {404, 409, 503}
         finally:
             kube(
@@ -348,8 +365,10 @@ try:
                 timeout_app,
                 "failed",
             )
-            assert api(f"/sandboxes/{timeout_app}")["preview_url"] is None
-            wait(lambda: no_pods(timeout_app))
+            timed_out = api(f"/sandboxes/{timeout_app}")
+            assert timed_out["preview_url"] is None
+            assert timed_out["error"]["code"] == "runtime_timeout"
+            wait(lambda: not resources(timeout_app), timeout=120)
         finally:
             kube(
                 "set",

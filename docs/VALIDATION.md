@@ -73,6 +73,14 @@ daemonの正常応答とCLI復帰を確認後、元の完全node ID・作成rece
 該当E2Eノード1個だけを回収しました。`e2e-recovery-cleanup.json`はPASSです。
 日常用kindと既存volumeは保持し、追加のOS再起動や権限変更は行っていません。
 
+`f3a8289`のfull `20261031T093017Z-4a52d79b`では、Playwrightの2アプリlifecycleが
+1/1 PASS（約3.6分、skipなし）、securityの独立5項目もPASSしました。全体は10/11 PASSで、
+E2Eの後続runtime検査だけがAPI rollout直後の公開HTTP 502でFAILです。fixture cleanupはPASS。
+rolloutだけを公開経路の復旧とは扱わず、同じUUIDの保持レコードを実HTTPで最大120秒観測します。
+後続leaseテストも旧worker Pod消失と唯一のReady/Running holderを確認してからenqueueし、
+実UIDを再照合して終了します。部分失敗とtimeoutはServiceを含む全資源回収を検査し、
+timeoutのerror codeも明示確認します。実観測を待つ変更であり、mutation再送やassertion削除はしません。
+
 ## 2026-10-30時点の証跡（履歴）
 
 | 対象 | 結果 | 証跡 |
