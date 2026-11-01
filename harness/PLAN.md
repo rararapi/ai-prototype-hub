@@ -1,3 +1,18 @@
+# Active: simplify CI scheduling (2026-11-02)
+
+- Work item ci-simplify-20261102, clean base d5118d7; branch codex/simplify-ci.
+- Coordinator owns workflow, policy regressions, HARNESS_SPEC and this PLAN; ci_review
+  independently reviews. API/state/provider contracts, runtime fixtures and dependencies stay fixed.
+- PR runs the existing Dev Container make check-dev; only main push and manual dispatch run
+  make verify. Feature-branch push no longer duplicates PR runs; main/manual omit the duplicate
+  Dev Container job. Full group still requires all11 gates, including real DB/kind/browser/security.
+- PR quick success is not runtime acceptance. Runtime changes require current-source full
+  evidence before merge. Manual dispatch becomes available after default-branch adoption.
+- Observed previous local full gate: about18min, e2e742s + security224s; main CI quick87s.
+  These are measurements, not a guaranteed future CI duration.
+- All11 local full gates and independent review required for this change; generated evidence
+  lives in worklogs/workflows/ci-simplify-20261102/. Publication is a separate requested action.
+
 # Active: generated work records renamed to worklogs (2026-11-02)
 
 - Work item worklogs-rename-20261102, clean maine366e2c; local branch codex/worklogs.

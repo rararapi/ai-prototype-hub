@@ -2,14 +2,17 @@ name: ProtoHub local gates
 on:
   pull_request:
   push:
-    branches: [main, 'codex/**']
+    branches: [main]
+  workflow_dispatch:
 permissions:
   contents: read
 concurrency:
   group: protohub-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  # Fast feedback on PRs; real runtime acceptance is the separate verify job.
   devcontainer:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -38,7 +41,9 @@ jobs:
           path: worklogs/reports/
           retention-days: 7
           if-no-files-found: warn
+  # Manual dispatch can verify a selected branch before merge.
   verify:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:

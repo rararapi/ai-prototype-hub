@@ -100,7 +100,27 @@ runnerは `PROTOHUB_HARNESS_RUN_ID`、`PROTOHUB_HARNESS_REPORT_DIR`（今回run�
 
 ## CI
 
-GitHub Actionsは `pull_request` と対象branchへのpushで検査。最小権限 `contents: read` を基本にし、外部PRへ秘密やクラウド資格情報を渡さない。`pull_request_target` でPRの任意コードを実行しない。
+GitHub Actionsは次のタイミングで実行する。feature branchへのpushだけでは起動せず、
+PRとの重複実行を避ける。mainとPRで同じ軽量jobも重複させない。
+
+| 起点 | job / コマンド | 検証範囲 |
+|---|---|---|
+| PR作成・更新 | `devcontainer` / `make check-dev` | runner自己テスト、公開前検査、lint/type、契約、単体テスト、package/web build |
+| mainへのpush（マージ含む） | `verify` / `make verify` | 実PostgreSQL、kind、ブラウザ、runtime/securityを含む全11gate |
+| 手動 `workflow_dispatch` | `verify` / `make verify` | 選択branchの全体検証。軽量jobは重複実行しない |
+
+PRでは `verify` jobはSKIPPED（実runtimeはNOT_RUN）となる。required checkでもskipped jobは
+成功扱いになるため、PRの緑表示を全体検証の証拠にしない。
+PRの軽量jobのPASSは、実DB・Docker image build・実runtimeの合格を意味しない。
+API、worker、起動基盤、E2Eなどruntimeに関わる変更は、マージ前にも対象の現在のコードで
+`make verify` を実行して証跡を残す。手動CIも利用できるが、workflow_dispatchのボタンは
+このworkflowがdefault branchへ反映されてから利用できる。
+手動実行はGitHub Actionsの「ProtoHub local gates」→「Run workflow」でbranchを選ぶ。
+手動runはPRのrequired checkを強制する仕組みではなく、担当が対象SHAと結果を確認する。
+mainの全体検証が失敗したら未解決として扱い、軽量jobの成功で置き換えない。
+
+最小権限 `contents: read` を基本にし、外部PRへ秘密やクラウド資格情報を渡さない。
+`pull_request_target` でPRの任意コードを実行しない。
 
 quick系jobは並行でよい。実kind E2Eは独立runnerで実行し、同一環境を複数jobで奪い合わない。action/image/toolのversionは導入時に公式releaseを確認し、可能なものは不変SHA/digestで固定する。
 
