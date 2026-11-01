@@ -6,7 +6,7 @@
 
 **v0は単一開発者のlocalhost専用**。`Sandbox` はプロダクト上の管理単位の名称であり、kindの通常コンテナで悪性コードの安全性を保証する意味ではない。
 
-対象外: 任意Git import、Dockerfile upload、任意イメージ/コマンド/env、ブラウザIDE、内部AIエージェント、WebSocketアプリ、認証付きユーザーアプリ、課金、実組織SSO、実LLMキー、クラウド作成、多組織SaaS。
+対象外: 任意Git import、Dockerfile upload、任意イメージ/コマンド/env、ブラウザIDE、内部AIエージェント、WebSocketアプリ、認証付きユーザーアプリ、課金、実組織SSO、実LLM呼び出し、クラウド作成、多組織SaaS。
 
 ## 2. アーキテクチャ
 
@@ -137,3 +137,18 @@ NetworkPolicyを置くだけで通信隔離が実装されたと言わない。�
 ## 9. 後続フェーズ
 
 AKS/Kata実検証、OIDC/Entra ID、組織ネットワーク限定、LiteLLM、永続ワークスペース、エージェント接続、任意コードのbuild/egress/isolationは後続。v0を完成させるために実キーや組織環境を要求しない。
+
+
+## 10. 開発ログインと共通キー（2026-11-01の追加依頼）
+
+固定local-dev principalをメール入力による開発セッションへ置き換える。
+新規アプリはログイン中の所有者へ結び付け、一覧/詳細/操作履歴は所有者か明示的な共有先のみ。
+共有先は閲覧のみ、実行操作と共有編集は所有者のみ。所有者不明の既存レコードは保持して非表示。
+Bearerセッションは24時間有効、DBはハッシュのみ、ブラウザはsessionStorage、Cookie未使用。
+`PROTOHUB_ENVIRONMENT=production` では開発ログインと保護APIを無効にする。
+これはメールの所有確認や本番認証を提供しない。
+
+`PROTOHUB_LLM_API_KEY` はAPIサーバー限定の共通秘密設定として全アプリの解決に使う。
+アプリ別キー設定は将来の拡張とし、現時点で実LLM通信やサンプルへのキー注入は追加しない。
+console/previewのOrigin・Cookie・ヘッダ境界と既存データの扱いは
+[DEVELOPMENT_AUTH.md](DEVELOPMENT_AUTH.md) を正本とする。

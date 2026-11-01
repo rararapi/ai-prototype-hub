@@ -3,6 +3,7 @@
 SANDBOX = {
     "id": "00000000-0000-4000-8000-000000000001",
     "name": "Example app",
+    "owner_email": "owner@example.test",
     "template_id": "hello-web",
     "desired_state": "stopped",
     "status": "stopped",
@@ -26,6 +27,15 @@ OPERATION = {
     "error": None,
 }
 EXAMPLES = {
+    "login": {
+        "token": "synthetic-session-token",
+        "email": "owner@example.test",
+        "expires_at": "2026-11-02T00:00:00Z",
+    },
+    "me": {"email": "owner@example.test"},
+    "logout": {"status": "ok"},
+    "get_shares": {"emails": ["reader@example.test"]},
+    "set_shares": {"emails": ["reader@example.test"]},
     "health": {"status": "ok"},
     "ready": {"status": "ok"},
     "system": {

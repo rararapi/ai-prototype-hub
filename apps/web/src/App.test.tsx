@@ -2,15 +2,21 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
-import { ApiError, api } from './api';
+import { ApiError, api, sessionStore, SESSION_EXPIRED_EVENT } from './api';
 import type { Operation, Sandbox } from './api';
-import { mockSystem, operationFixture, sandboxFixture } from './test/fixtures';
+import { loginFixture, mockSystem, operationFixture, sandboxFixture } from './test/fixtures';
 
 let records: Sandbox[];
 let detail: Sandbox;
 let currentOperation: Operation;
 
 beforeEach(() => {
+  sessionStore.set({ ...loginFixture, expires_at: new Date(Date.now() + 86_400_000).toISOString() });
+  vi.spyOn(api, 'me').mockResolvedValue({ email: loginFixture.email });
+  vi.spyOn(api, 'login').mockImplementation(async email => ({ ...loginFixture, email: email.toLowerCase(), expires_at: new Date(Date.now() + 86_400_000).toISOString() }));
+  vi.spyOn(api, 'logout').mockResolvedValue({ status: 'ok' });
+  vi.spyOn(api, 'shares').mockResolvedValue({ emails: [] });
+  vi.spyOn(api, 'setShares').mockImplementation(async (_id, emails) => ({ emails }));
   records = [];
   detail = { ...sandboxFixture };
   currentOperation = { ...operationFixture };
@@ -61,7 +67,7 @@ describe('ProtoHub management UI (mocked HTTP component tests)', () => {
     await user.clear(dialog.getByLabelText('自動停止までの時間（秒）'));
     await user.type(dialog.getByLabelText('自動停止までの時間（秒）'), '120');
     await user.click(dialog.getByRole('button', { name: '登録' }));
-    expect(api.create).toHaveBeenCalledWith({ name: 'First sample', template_id: 'hello-web', ttl_seconds: 120 });
+    expect(api.create).toHaveBeenCalledWith({ name: 'First sample', template_id: 'hello-web', ttl_seconds: 120 }, expect.any(AbortSignal));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(screen.getByTestId('sandbox-status')).toHaveTextContent('停止中');
     expect(api.action).not.toHaveBeenCalled();
@@ -78,7 +84,7 @@ describe('ProtoHub management UI (mocked HTTP component tests)', () => {
     expect(screen.getByTestId('operation-status')).toHaveTextContent('起動 · 受付済み');
     await user.click(panel.getByRole('button', { name: '停止' }));
     await waitFor(() => expect(screen.getByTestId('sandbox-status')).toHaveTextContent('停止処理中'));
-    expect(api.action).toHaveBeenLastCalledWith(detail.id, 'stop');
+    expect(api.action).toHaveBeenLastCalledWith(detail.id, 'stop', expect.any(AbortSignal));
   });
 
   it('suppresses duplicate action submission while the first request is pending', async () => {
@@ -207,5 +213,146 @@ describe('ProtoHub management UI (mocked HTTP component tests)', () => {
       expect(api.operation).toHaveBeenCalledTimes(1);
       expect(vi.mocked(api.list).mock.calls.length).toBeGreaterThan(observations);
     } finally { vi.useRealTimers(); }
+  });
+});
+
+
+describe('development login and app sharing', () => {
+  it('requires email login before fetching private app data', async () => {
+    sessionStore.clear();
+    const user = userEvent.setup();
+    render(<App />);
+    expect(screen.getByRole('heading', { name: '開発用ログイン' })).toBeInTheDocument();
+    expect(api.list).not.toHaveBeenCalled();
+    await user.type(screen.getByLabelText('メールアドレス'), 'owner@example.test');
+    await user.click(screen.getByRole('button', { name: '開発用ログイン' }));
+    expect(api.login).toHaveBeenCalledWith('owner@example.test', expect.any(AbortSignal));
+    expect(await screen.findByText('まだアプリがありません')).toBeInTheDocument();
+    expect(screen.getByText('owner@example.test')).toBeInTheDocument();
+  });
+
+  it('never offers login when the environment disables development auth', async () => {
+    sessionStore.clear();
+    vi.mocked(api.system).mockResolvedValue({ ...mockSystem, auth_mode: 'disabled' });
+    render(<App />);
+    expect(await screen.findByText('この環境では開発用ログインを利用できません。')).toBeInTheDocument();
+    expect(screen.queryByLabelText('メールアドレス')).not.toBeInTheDocument();
+    expect(api.list).not.toHaveBeenCalled();
+  });
+
+  it('shows shared apps as read-only and clears details when sharing is revoked', async () => {
+    detail = { ...detail, owner_email: 'another@example.test' };
+    records = [detail];
+    const { user, panel } = await openDetail();
+    expect(screen.getByRole('button', { name: 'Example app の詳細' })).toHaveTextContent('共有されたアプリ');
+    for (const name of ['起動', '停止', '削除']) expect(panel.getByRole('button', { name })).toBeDisabled();
+    expect(panel.queryByRole('button', { name: '共有設定' })).not.toBeInTheDocument();
+    records = [];
+    vi.mocked(api.sandbox).mockRejectedValue(new ApiError('Resource not found', 404));
+    await user.click(screen.getByRole('button', { name: '更新' }));
+    await waitFor(() => expect(screen.queryByTestId('sandbox-status')).not.toBeInTheDocument());
+    expect(screen.queryByRole('button', { name: 'Example app の詳細' })).not.toBeInTheDocument();
+  });
+
+  it('lets the owner replace or revoke the explicit recipient list', async () => {
+    records = [detail];
+    vi.mocked(api.shares).mockResolvedValue({ emails: ['reader@example.test'] });
+    const { user, panel } = await openDetail();
+    await user.click(panel.getByRole('button', { name: '共有設定' }));
+    const dialog = within(screen.getByRole('dialog', { name: 'アプリの共有' }));
+    const input = await dialog.findByLabelText('共有先のメールアドレス');
+    await waitFor(() => expect(input).toHaveValue('reader@example.test'));
+    await user.clear(input);
+    await user.click(dialog.getByRole('button', { name: '共有を保存' }));
+    expect(api.setShares).toHaveBeenCalledWith(detail.id, [], expect.any(AbortSignal));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(screen.getByText('共有設定を保存しました。', { selector: 'p.inline-notice' })).toBeInTheDocument();
+  });
+
+  it('keeps keyboard focus inside the sharing dialog while saving disables its fields', async () => {
+    records = [detail];
+    let resolveSave!: (value: { emails: string[] }) => void;
+    vi.mocked(api.setShares).mockImplementation(() => new Promise(resolve => { resolveSave = resolve; }));
+    const { user, panel } = await openDetail();
+    await user.click(panel.getByRole('button', { name: '共有設定' }));
+    const dialog = within(screen.getByRole('dialog', { name: 'アプリの共有' }));
+    await waitFor(() => expect(dialog.getByRole('button', { name: '共有を保存' })).toBeEnabled());
+    await user.click(dialog.getByRole('button', { name: '共有を保存' }));
+    expect(dialog.getByLabelText('共有先のメールアドレス')).toBeDisabled();
+    const close = dialog.getByRole('button', { name: '閉じる' });
+    close.focus();
+    await user.tab();
+    expect(close).toHaveFocus();
+    await user.tab({ shift: true });
+    expect(close).toHaveFocus();
+    await act(async () => { resolveSave({ emails: [] }); });
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
+  it('does not allow overwriting shares after the current recipients fail to load', async () => {
+    records = [detail];
+    vi.mocked(api.shares).mockRejectedValue(new ApiError('Database unavailable', 503));
+    const { user, panel } = await openDetail();
+    await user.click(panel.getByRole('button', { name: '共有設定' }));
+    const dialog = within(screen.getByRole('dialog', { name: 'アプリの共有' }));
+    expect(await dialog.findByRole('alert')).toHaveTextContent('Database unavailable');
+    expect(dialog.getByRole('button', { name: '共有を保存' })).toBeDisabled();
+    expect(api.setShares).not.toHaveBeenCalled();
+  });
+
+  it('logout clears private state and ignores a late result from the old session', async () => {
+    records = [detail];
+    let resolveOld!: (value: { items: Sandbox[] }) => void;
+    const { user } = await openDetail();
+    vi.mocked(api.list).mockImplementationOnce(() => new Promise(resolve => { resolveOld = resolve; }));
+    await user.click(screen.getByRole('button', { name: '更新' }));
+    await user.click(screen.getByRole('button', { name: 'ログアウト' }));
+    expect(sessionStore.get()).toBeNull();
+    expect(screen.getByRole('heading', { name: '開発用ログイン' })).toBeInTheDocument();
+    await act(async () => { resolveOld({ items: [detail] }); });
+    expect(screen.queryByText('Example app')).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText('メールアドレス'), 'next@example.test');
+    records = [];
+    await user.click(screen.getByRole('button', { name: '開発用ログイン' }));
+    expect(await screen.findByText('まだアプリがありません')).toBeInTheDocument();
+    expect(screen.queryByText('Example app')).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('reload validates the saved session before exposing private data', async () => {
+    vi.mocked(api.me).mockRejectedValue(new ApiError('Session expired', 401));
+    render(<App />);
+    expect(screen.getByText('アプリを読み込み中…')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '開発用ログイン' })).toBeInTheDocument();
+    expect(api.list).not.toHaveBeenCalled();
+    expect(sessionStore.get()).toBeNull();
+  });
+
+  it('logout aborts a pending registration and ignores its late response', async () => {
+    let resolveOld!: (value: Sandbox) => void;
+    vi.mocked(api.create).mockImplementation(() => new Promise(resolve => { resolveOld = resolve; }));
+    const user = userEvent.setup();
+    render(<App />);
+    await screen.findByText('まだアプリがありません');
+    await user.click(screen.getAllByRole('button', { name: /サンプルを登録/ })[0]);
+    const dialog = within(screen.getByRole('dialog', { name: 'サンプルアプリを登録' }));
+    await user.type(dialog.getByLabelText('アプリ名'), 'Old session app');
+    await user.click(dialog.getByRole('button', { name: '登録' }));
+    const signal = vi.mocked(api.create).mock.calls[0][1];
+    expect(signal?.aborted).toBe(false);
+    await user.click(screen.getByRole('button', { name: 'ログアウト' }));
+    expect(signal?.aborted).toBe(true);
+    await act(async () => { resolveOld({ ...sandboxFixture, name: 'Old session app' }); });
+    expect(screen.queryByText('Old session app')).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('a current-session 401 clears private data and returns to login', async () => {
+    records = [detail];
+    await openDetail();
+    act(() => { window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT, { detail: sessionStore.get()?.token })); });
+    expect(screen.getByRole('heading', { name: '開発用ログイン' })).toBeInTheDocument();
+    expect(screen.queryByText('Example app')).not.toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('再度ログインしてください');
   });
 });

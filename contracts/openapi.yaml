@@ -5,6 +5,353 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/api/v1/auth/me": {
+      "get": {
+        "summary": "Me",
+        "operationId": "me",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Principal"
+                },
+                "example": {
+                  "email": "owner@example.test"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_400",
+                    "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Development login required",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_401",
+                    "message": "Development login required",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Local origin, host or client header rejected",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_403",
+                    "message": "Local origin, host or client header rejected",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_404",
+                    "message": "Resource not found",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "State conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_409",
+                    "message": "State conflict",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_500",
+                    "message": "Internal error",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_503",
+                    "message": "Dependency unavailable",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^Bearer .+$"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "summary": "Logout",
+        "operationId": "logout",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogoutResult"
+                },
+                "example": {
+                  "status": "ok"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_400",
+                    "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Development login required",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_401",
+                    "message": "Development login required",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Local origin, host or client header rejected",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_403",
+                    "message": "Local origin, host or client header rejected",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_404",
+                    "message": "Resource not found",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "State conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_409",
+                    "message": "State conflict",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_500",
+                    "message": "Internal error",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_503",
+                    "message": "Dependency unavailable",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-ProtoHub-Client",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "console"
+              ]
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^Bearer .+$"
+            }
+          }
+        ]
+      }
+    },
     "/healthz": {
       "get": {
         "summary": "Health",
@@ -34,6 +381,23 @@
                   "error": {
                     "code": "http_400",
                     "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Development login required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_401",
+                    "message": "Development login required",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 }
@@ -180,6 +544,23 @@
               }
             }
           },
+          "401": {
+            "description": "Development login required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_401",
+                    "message": "Development login required",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
           "403": {
             "description": "Local origin, host or client header rejected",
             "content": {
@@ -319,6 +700,23 @@
                   "error": {
                     "code": "http_400",
                     "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Development login required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_401",
+                    "message": "Development login required",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 }
@@ -471,6 +869,23 @@
               }
             }
           },
+          "401": {
+            "description": "Development login required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_401",
+                    "message": "Development login required",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
           "403": {
             "description": "Local origin, host or client header rejected",
             "content": {
@@ -593,6 +1008,7 @@
                     {
                       "id": "00000000-0000-4000-8000-000000000001",
                       "name": "Example app",
+                      "owner_email": "owner@example.test",
                       "template_id": "hello-web",
                       "desired_state": "stopped",
                       "status": "stopped",
@@ -613,6 +1029,23 @@
                   "error": {
                     "code": "http_400",
                     "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Development login required",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_401",
+                    "message": "Development login required",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -724,7 +1157,18 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^Bearer .+$"
+            }
+          }
+        ]
       },
       "post": {
         "summary": "Create Sandbox",
@@ -750,6 +1194,7 @@
                 "example": {
                   "id": "00000000-0000-4000-8000-000000000001",
                   "name": "Example app",
+                  "owner_email": "owner@example.test",
                   "template_id": "hello-web",
                   "desired_state": "stopped",
                   "status": "stopped",
@@ -768,6 +1213,23 @@
                   "error": {
                     "code": "http_400",
                     "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Development login required",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_401",
+                    "message": "Development login required",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -891,6 +1353,15 @@
                 "console"
               ]
             }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^Bearer .+$"
+            }
           }
         ]
       }
@@ -909,6 +1380,15 @@
               "format": "uuid",
               "title": "Sandbox Id"
             }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^Bearer .+$"
+            }
           }
         ],
         "responses": {
@@ -922,6 +1402,7 @@
                 "example": {
                   "id": "00000000-0000-4000-8000-000000000001",
                   "name": "Example app",
+                  "owner_email": "owner@example.test",
                   "template_id": "hello-web",
                   "desired_state": "stopped",
                   "status": "stopped",
@@ -940,6 +1421,23 @@
                   "error": {
                     "code": "http_400",
                     "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Development login required",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_401",
+                    "message": "Development login required",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -1077,6 +1575,15 @@
                 "console"
               ]
             }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^Bearer .+$"
+            }
           }
         ],
         "responses": {
@@ -1108,6 +1615,23 @@
                   "error": {
                     "code": "http_400",
                     "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Development login required",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_401",
+                    "message": "Development login required",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -1247,6 +1771,15 @@
                 "console"
               ]
             }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^Bearer .+$"
+            }
           }
         ],
         "responses": {
@@ -1278,6 +1811,23 @@
                   "error": {
                     "code": "http_400",
                     "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Development login required",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_401",
+                    "message": "Development login required",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -1417,6 +1967,15 @@
                 "console"
               ]
             }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^Bearer .+$"
+            }
           }
         ],
         "responses": {
@@ -1448,6 +2007,23 @@
                   "error": {
                     "code": "http_400",
                     "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Development login required",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_401",
+                    "message": "Development login required",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -1576,6 +2152,15 @@
               "format": "uuid",
               "title": "Operation Id"
             }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^Bearer .+$"
+            }
           }
         ],
         "responses": {
@@ -1607,6 +2192,584 @@
                   "error": {
                     "code": "http_400",
                     "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Development login required",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_401",
+                    "message": "Development login required",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Local origin, host or client header rejected",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_403",
+                    "message": "Local origin, host or client header rejected",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_404",
+                    "message": "Resource not found",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "State conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_409",
+                    "message": "State conflict",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_500",
+                    "message": "Internal error",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_503",
+                    "message": "Dependency unavailable",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "summary": "Login",
+        "operationId": "login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginSession"
+                },
+                "example": {
+                  "token": "synthetic-session-token",
+                  "email": "owner@example.test",
+                  "expires_at": "2026-11-02T00:00:00Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_400",
+                    "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Development login required",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_401",
+                    "message": "Development login required",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Local origin, host or client header rejected",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_403",
+                    "message": "Local origin, host or client header rejected",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_404",
+                    "message": "Resource not found",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "State conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_409",
+                    "message": "State conflict",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_500",
+                    "message": "Internal error",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_503",
+                    "message": "Dependency unavailable",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-ProtoHub-Client",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "console"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/sandboxes/{sandbox_id}/shares": {
+      "get": {
+        "summary": "Get Shares",
+        "operationId": "get_shares",
+        "parameters": [
+          {
+            "name": "sandbox_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Sandbox Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^Bearer .+$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareList"
+                },
+                "example": {
+                  "emails": [
+                    "reader@example.test"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_400",
+                    "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Development login required",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_401",
+                    "message": "Development login required",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Local origin, host or client header rejected",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_403",
+                    "message": "Local origin, host or client header rejected",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_404",
+                    "message": "Resource not found",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "State conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_409",
+                    "message": "State conflict",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_500",
+                    "message": "Internal error",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_503",
+                    "message": "Dependency unavailable",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Set Shares",
+        "operationId": "set_shares",
+        "parameters": [
+          {
+            "name": "sandbox_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Sandbox Id"
+            }
+          },
+          {
+            "name": "X-ProtoHub-Client",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "console"
+              ]
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^Bearer .+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShareList"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareList"
+                },
+                "example": {
+                  "emails": [
+                    "reader@example.test"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_400",
+                    "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Development login required",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_401",
+                    "message": "Development login required",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -1842,6 +3005,60 @@
         ],
         "title": "HttpErrorDetail"
       },
+      "LoginRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "minLength": 3,
+            "title": "Email"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "LoginRequest"
+      },
+      "LoginSession": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "Token"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "token",
+          "email",
+          "expires_at"
+        ],
+        "title": "LoginSession"
+      },
+      "LogoutResult": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "ok",
+            "title": "Status",
+            "default": "ok"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "LogoutResult"
+      },
       "Operation": {
         "properties": {
           "id": {
@@ -1915,8 +3132,33 @@
         ],
         "title": "OperationStatus"
       },
+      "Principal": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "Principal"
+      },
       "Sandbox": {
         "properties": {
+          "owner_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Email"
+          },
           "id": {
             "type": "string",
             "format": "uuid",
@@ -2045,6 +3287,21 @@
         ],
         "title": "SandboxStatus"
       },
+      "ShareList": {
+        "properties": {
+          "emails": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Emails"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ShareList"
+      },
       "SystemInfo": {
         "properties": {
           "runtime_mode": {
@@ -2057,7 +3314,10 @@
           },
           "auth_mode": {
             "type": "string",
-            "const": "local-dev",
+            "enum": [
+              "local-dev",
+              "disabled"
+            ],
             "title": "Auth Mode",
             "default": "local-dev"
           },

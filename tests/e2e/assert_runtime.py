@@ -10,6 +10,8 @@ from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import ProxyHandler, Request, build_opener
 
+from api_recovery import ready_api_uid, wait_for_api_recovery
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--gate", choices=["e2e", "security"], required=True)
 parser.add_argument("--report", type=Path, required=True)
@@ -18,19 +20,21 @@ console = os.environ["PROTOHUB_CONSOLE_URL"]
 preview = os.environ["PROTOHUB_PREVIEW_URL"]
 context = "kind-" + os.environ["PROTOHUB_CLUSTER_NAME"]
 opener = build_opener(ProxyHandler({}))
-checks, registered = [], []
+checks, registered, api_recoveries = [], [], []
+owner_token = ""
 
 
-def http(path, method="GET", payload=None, headers=None, base=console):
+def http(path, method="GET", payload=None, headers=None, base=console, timeout_seconds=10):
     request_headers = {
         "Content-Type": "application/json",
         "X-ProtoHub-Client": "console",
+        **({"Authorization": f"Bearer {owner_token}"} if base == console and owner_token else {}),
         **(headers or {}),
     }
     data = json.dumps(payload if payload is not None else {}).encode() if method != "GET" else None
     request = Request(base + path, data=data, method=method, headers=request_headers)
     try:
-        with opener.open(request, timeout=10) as response:
+        with opener.open(request, timeout=timeout_seconds) as response:
             return response.status, response.read()
     except HTTPError as exc:
         return exc.code, exc.read()
@@ -121,6 +125,32 @@ def sole_ready_worker():
     return pod
 
 
+def api_pods(timeout_seconds=5):
+    result = subprocess.run(
+        [
+            "kubectl",
+            "--context",
+            context,
+            f"--request-timeout={timeout_seconds:.3f}s",
+            "-n",
+            "protohub-system",
+            "get",
+            "pods",
+            "-l",
+            "app=protohub-api",
+            "-o",
+            "json",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=timeout_seconds,
+        check=False,
+    )
+    if result.returncode:
+        raise AssertionError("API Pod observation failed")
+    return json.loads(result.stdout)
+
+
 def passed(name):
     checks.append({"name": name, "status": "PASS"})
     print("PASS real " + name, flush=True)
@@ -128,6 +158,9 @@ def passed(name):
 
 try:
     assert api("/system")["runtime_mode"] == "real-kind"
+    assert http("/api/v1/sandboxes")[0] == 401
+    owner_token = api("/auth/login", "POST", {"email": "runtime-owner@example.test"})["token"]
+    assert api("/auth/me") == {"email": "runtime-owner@example.test"}
     wait(
         lambda: (
             not json.loads(
@@ -150,6 +183,61 @@ try:
     passed("duplicate start, real readiness and independent URLs")
 
     if args.gate == "security":
+        reader = api("/auth/login", "POST", {"email": "runtime-reader@example.test"})["token"]
+        outsider = api("/auth/login", "POST", {"email": "runtime-outsider@example.test"})["token"]
+        reader_headers = {"Authorization": f"Bearer {reader}"}
+        outsider_headers = {"Authorization": f"Bearer {outsider}"}
+        assert api(f"/sandboxes/{one}")["owner_email"] == "runtime-owner@example.test"
+        api(f"/sandboxes/{one}/shares", "PUT", {"emails": ["runtime-reader@example.test"]})
+        reader_list = json.loads(http("/api/v1/sandboxes", headers=reader_headers)[1])
+        assert [item["id"] for item in reader_list["items"]] == [one]
+        assert json.loads(http("/api/v1/sandboxes", headers=outsider_headers)[1]) == {"items": []}
+        for path in (f"/sandboxes/{two}", f"/operations/{operations[0]['id']}"):
+            assert http("/api/v1" + path, headers=outsider_headers)[0] == 404
+        assert http(f"/api/v1/operations/{operations[0]['id']}", headers=reader_headers)[0] == 200
+        for method, path, payload in (
+            ("POST", f"/sandboxes/{one}/start", {}),
+            ("POST", f"/sandboxes/{one}/stop", {}),
+            ("DELETE", f"/sandboxes/{one}", {}),
+            ("PUT", f"/sandboxes/{one}/shares", {"emails": []}),
+        ):
+            assert http("/api/v1" + path, method, payload, reader_headers)[0] == 404
+        assert http(f"/api/v1/sandboxes/{one}/shares", headers=reader_headers)[0] == 404
+        api(f"/sandboxes/{one}/shares", "PUT", {"emails": []})
+        assert http(f"/api/v1/sandboxes/{one}", headers=reader_headers)[0] == 404
+        assert http(f"/api/v1/operations/{operations[0]['id']}", headers=reader_headers)[0] == 404
+        assert http("/api/v1/auth/logout", "POST", {}, reader_headers)[0] == 200
+        assert http("/api/v1/sandboxes", headers=reader_headers)[0] == 401
+        assert http("/api/v1/auth/logout", "POST", {}, outsider_headers)[0] == 200
+        passed("live email sessions, owner/recipient visibility, read-only sharing and revocation")
+
+    if args.gate == "security":
+        # The operator executes fixed assertions; no pod RBAC or worker permissions change.
+        # Print neither the key nor the environment, even if an assertion fails.
+        kube(
+            "exec",
+            "deployment/api",
+            "--",
+            "python",
+            "-c",
+            "from uuid import UUID; from protohub.domain.settings import Settings; "
+            "settings = Settings(); "
+            "one = settings.resolve_llm_api_key(UUID(int=1)); "
+            "two = settings.resolve_llm_api_key(UUID(int=2)); "
+            "assert one is not None and one is two; "
+            "assert one.get_secret_value() == 'synthetic-fixture-common-credential'; "
+            "assert settings.environment == 'test'",
+        )
+        for deployment in ("worker", "preview"):
+            kube(
+                "exec",
+                "deployment/" + deployment,
+                "--",
+                "python",
+                "-c",
+                "import os; assert 'PROTOHUB_LLM_API_KEY' not in os.environ",
+            )
+        passed("live common LLM Secret delivery to API only, same key for every app")
         for namespace, verb, resource, expected in (
             ("protohub-samples", "create", "deployments.apps", "yes"),
             ("protohub-samples", "get", "secrets", "no"),
@@ -231,9 +319,28 @@ try:
         kube("scale", "deployment/worker", "--replicas=1")
         kube("rollout", "status", "deployment/worker", "--timeout=180s")
         status(queued, "running")
-        kube("rollout", "restart", "deployment/api")
-        kube("rollout", "status", "deployment/api", "--timeout=180s")
-        wait(lambda: api(f"/sandboxes/{queued}")["name"] == "Worker recovery", timeout=120)
+        # The old test accepted one GET200 then could POST into a transient502.
+        # Observe Pod drain + sustained public GETs; every registration remains one-shot.
+        for index in range(3):
+            previous_uid = wait(lambda: ready_api_uid(api_pods()))
+            kube("rollout", "restart", "deployment/api")
+            kube("rollout", "status", "deployment/api", "--timeout=180s")
+            observation = wait_for_api_recovery(
+                api_pods,
+                lambda timeout: http(f"/api/v1/sandboxes/{queued}", timeout_seconds=timeout),
+                previous_uid=previous_uid,
+                expected={
+                    "id": queued,
+                    "name": "Worker recovery",
+                    "owner_email": "runtime-owner@example.test",
+                },
+            )
+            name = f"Post-rollout registration {index + 1}"
+            created = create(name)
+            matches = [item for item in api("/sandboxes")["items"] if item["name"] == name]
+            assert len(matches) == 1 and matches[0]["id"] == created
+            api_recoveries.append({**observation, "registration_id": created})
+        passed("three API rollouts recover before one-shot registrations without duplicates")
         passed("queue recovery and API/worker restart persistence")
 
         config = json.loads(kube("get", "configmap", "protohub-config", "-o", "json"))["data"]
@@ -398,6 +505,7 @@ finally:
         json.dumps(
             {
                 "checks": checks,
+                "api_recoveries": api_recoveries,
                 "sandbox_ids": registered,
                 "context": context,
                 "cleanup": "all fixture sandbox resources absent",

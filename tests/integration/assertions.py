@@ -15,6 +15,7 @@ for command in (
         "-m",
         "pytest",
         "apps/server/tests/api",
+        "tests/integration/test_identity_postgres.py",
         "-m",
         "postgres",
         "--junitxml=/evidence/postgres.xml",

@@ -7,6 +7,7 @@ metadata:
 data:
   PROTOHUB_DATABASE_URL: postgresql+psycopg://protohub:local-dev@db/protohub
   PROTOHUB_RUNTIME_MODE: real-kind
+  PROTOHUB_ENVIRONMENT: ${ENVIRONMENT}
   PROTOHUB_CONSOLE_ORIGIN: http://localhost:${CONSOLE_PORT}
   PROTOHUB_PREVIEW_ORIGIN: http://localhost:${PREVIEW_PORT}
   PROTOHUB_ALLOWED_HOSTS: '["localhost","127.0.0.1"]'
@@ -79,6 +80,10 @@ spec:
           volumeMounts: [{name: tmp, mountPath: /tmp}]
       containers:
         - name: api
+          env:
+            - name: PROTOHUB_LLM_API_KEY
+              valueFrom:
+                secretKeyRef: {name: protohub-llm, key: api-key, optional: true}
           image: protohub/server:${BUILD_TAG}
           imagePullPolicy: IfNotPresent
           envFrom: [{configMapRef: {name: protohub-config}}]

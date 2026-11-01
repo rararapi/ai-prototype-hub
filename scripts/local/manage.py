@@ -106,7 +106,15 @@ def config(mode: str | None = None) -> dict:
             raise ValueError
     except ValueError:
         raise Blocked("Console/preview need distinct unprivileged TCP ports") from None
+    saved = existing_record({"mode": mode, "name": name, "owner_id": owner()})
+    saved_environment = (saved or {}).get(
+        "environment", previous.get("environment", "local") if reuse else "local"
+    )
+    environment = os.environ.get("PROTOHUB_ENVIRONMENT", saved_environment)
+    if environment not in {"local", "development", "test", "production"}:
+        raise Blocked("PROTOHUB_ENVIRONMENT must be local, development, test or production")
     return {
+        "environment": environment,
         "mode": mode,
         "name": name,
         "console_port": console,
@@ -165,6 +173,7 @@ def free_ports(cfg: dict) -> None:
 
 
 def compose(cfg: dict, *args: str) -> str:
+    os.environ["PROTOHUB_ENVIRONMENT"] = cfg.get("environment", "local")
     os.environ["PROTOHUB_OWNER_ID"] = cfg["owner_id"]
     os.environ["PROTOHUB_CONSOLE_PORT"] = str(cfg["console_port"])
     os.environ["PROTOHUB_PREVIEW_PORT"] = str(cfg["preview_port"])
@@ -327,6 +336,7 @@ def verify_kind(cfg: dict, allow_incomplete: bool = False) -> bool:
 
 def render(cfg: dict, source: str, target: str, tag: str = "") -> Path:
     values = {
+        "ENVIRONMENT": cfg.get("environment", "local"),
         "OWNER_ID": cfg["owner_id"],
         "CONSOLE_PORT": cfg["console_port"],
         "PREVIEW_PORT": cfg["preview_port"],
@@ -418,6 +428,53 @@ def create_kind(cfg: dict, cluster: Path) -> None:
         raise Blocked("kind returned without a verifiable node identity")
 
 
+def configure_llm_secret(cfg: dict) -> None:
+    """Feed the shared API-only key through stdin, never argv, disk or diagnostics.
+
+    Called after the existing cluster/namespace ownership guards. An unset variable
+    retains the existing key; an explicitly empty value clears it on the next rollout.
+    """
+    key = os.environ.get("PROTOHUB_LLM_API_KEY")
+    if key is None:
+        return
+    manifest = {
+        "apiVersion": "v1",
+        "kind": "Secret",
+        "metadata": {
+            "name": "protohub-llm",
+            "namespace": "protohub-system",
+            "labels": {OWNER_LABEL: cfg["owner_id"], "app.kubernetes.io/managed-by": "protohub"},
+        },
+        "type": "Opaque",
+        "stringData": {"api-key": key},
+    }
+    try:
+        result = subprocess.run(
+            [
+                "kubectl",
+                "--context",
+                "kind-" + cfg["name"],
+                "--request-timeout=15s",
+                "apply",
+                "--server-side",
+                "--field-manager=protohub-local",
+                "-f",
+                "-",
+            ],
+            cwd=ROOT,
+            input=json.dumps(manifest),
+            text=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=30,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        raise Blocked("Could not configure shared LLM key; secret diagnostics suppressed") from None
+    if result.returncode:
+        raise Blocked("Could not configure shared LLM key; secret diagnostics suppressed")
+
+
 def up(cfg: dict) -> None:
     preflight(cfg["mode"])
     if cfg["mode"] == "mock":
@@ -432,6 +489,10 @@ def up(cfg: dict) -> None:
             free_ports(cfg)
             cluster = render(cfg, "infra/kind/cluster.yaml.in", "cluster.yaml")
             create_kind(cfg, cluster)
+        # Retain an explicit environment change even if build/apply/rollout fails.
+        # The existing cluster identity was verified above; preserve its receipt.
+        record = existing_record(cfg) or cfg
+        save(record_path(cfg), {**record, **cfg})
         revision = run(["git", "rev-parse", "HEAD"], True)
         tag = revision[:12] + "-" + str(int(time.time()))
         for image, dockerfile in (
@@ -465,6 +526,7 @@ def up(cfg: dict) -> None:
         namespace_file = render(cfg, "infra/kubernetes/namespaces.yaml.in", "namespaces.yaml")
         kube(cfg, "apply", "-f", str(namespace_file))
         kube(cfg, "apply", "-f", "infra/kubernetes/rbac.yaml")
+        configure_llm_secret(cfg)
         stack = render(cfg, "infra/kubernetes/stack.yaml.in", "stack.yaml", tag)
         kube(cfg, "apply", "-f", str(stack))
         for deployment in ("db", "api", "worker", "preview", "web"):
@@ -480,7 +542,7 @@ def up(cfg: dict) -> None:
         record = existing_record(cfg) or cfg
         save(
             record_path(cfg),
-            {**record, "build_tag": tag, "git_sha": revision, "bootstrap_state": "ready"},
+            {**record, **cfg, "build_tag": tag, "git_sha": revision, "bootstrap_state": "ready"},
         )
     if os.environ.get("PROTOHUB_NO_ACTIVATE") != "1":
         save(STATE / "active.json", cfg)

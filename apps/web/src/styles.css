@@ -1329,3 +1329,20 @@ main {
 }
 
 
+
+
+/* Login and sharing reuse the workspace palette, type scale and form controls. */
+.login-page { min-height:calc(100vh - 76px); display:grid; place-items:center; }
+.login-panel { width:min(100%,440px); border:1px solid #e1e4ec; border-radius:10px; background:#fff; padding:30px; }
+.login-panel h1 { font-size:23px; margin-bottom:14px; }
+.login-panel>.muted { font-size:13px; margin-bottom:14px; }
+.login-panel>.field-hint { margin-bottom:24px; }
+.principal-email { max-width:min(36vw,330px); overflow-wrap:anywhere; }
+.local-principal .text-button { flex-shrink:0; }
+.registration-form textarea { font:inherit; width:100%; resize:vertical; min-height:110px; border:1px solid #dcd8e4; border-radius:6px; background:#fff; color:#4f475b; padding:9px 11px; margin-bottom:8px; }
+textarea:focus-visible { outline:3px solid #a99ce8; outline-offset:4px; }
+.modal { overscroll-behavior:contain; }
+.detail-actions { flex-wrap:wrap; }
+.skip-link { position:fixed; top:8px; left:8px; transform:translateY(-150%); z-index:30; padding:8px; background:#fff; border:2px solid #6750b6; }
+.skip-link:focus { transform:translateY(0); }
+@media(max-width:480px) { .topbar { height:auto; min-height:64px; gap:10px; } .local-principal { gap:5px; } .principal-email { max-width:36vw; font-size:10px; } .login-panel { padding:24px; } }

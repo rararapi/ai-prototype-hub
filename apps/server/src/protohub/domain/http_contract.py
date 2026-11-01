@@ -8,14 +8,23 @@ from protohub.domain.examples import EXAMPLES
 from protohub.domain.models import (
     Health,
     HttpError,
+    LoginSession,
+    LogoutResult,
     Operation,
+    Principal,
     Sandbox,
     SandboxList,
+    ShareList,
     SystemInfo,
     TemplateList,
 )
 
 ROUTES: dict[str, tuple[str, str, Any, int]] = {
+    "login": ("POST", "/api/v1/auth/login", LoginSession, 200),
+    "me": ("GET", "/api/v1/auth/me", Principal, 200),
+    "logout": ("POST", "/api/v1/auth/logout", LogoutResult, 200),
+    "get_shares": ("GET", "/api/v1/sandboxes/{sandbox_id}/shares", ShareList, 200),
+    "set_shares": ("PUT", "/api/v1/sandboxes/{sandbox_id}/shares", ShareList, 200),
     "health": ("GET", "/healthz", Health, 200),
     "ready": ("GET", "/readyz", Health, 200),
     "system": ("GET", "/api/v1/system", SystemInfo, 200),
@@ -39,6 +48,7 @@ def route(app: FastAPI, name: str) -> Any:
     responses: dict[int | str, Any] = {}
     for code, message in {
         400: "Invalid request",
+        401: "Development login required",
         403: "Local origin, host or client header rejected",
         404: "Resource not found",
         409: "State conflict",
@@ -63,7 +73,7 @@ def route(app: FastAPI, name: str) -> Any:
         }
     responses[status] = {"content": {"application/json": {"example": EXAMPLES[name]}}}
     extra = None
-    if method in {"POST", "DELETE"}:
+    if method in {"POST", "PUT", "DELETE"}:
         extra = {
             "parameters": [
                 {
@@ -74,6 +84,16 @@ def route(app: FastAPI, name: str) -> Any:
                 }
             ]
         }
+    if name not in {"health", "ready", "system", "templates", "login"}:
+        extra = extra or {}
+        extra.setdefault("parameters", []).append(
+            {
+                "name": "Authorization",
+                "in": "header",
+                "required": True,
+                "schema": {"type": "string", "pattern": "^Bearer .+$"},
+            }
+        )
     return app.api_route(
         path,
         methods=[method],

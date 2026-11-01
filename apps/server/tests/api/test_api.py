@@ -12,6 +12,14 @@ HEADERS = {"X-ProtoHub-Client": "console", "Origin": "http://localhost:8080"}
 PAYLOAD = {"name": "First app", "template_id": "hello-web", "ttl_seconds": 60}
 
 
+def login(client):
+    response = client.post(
+        "/api/v1/auth/login", json={"email": "owner@example.test"}, headers=HEADERS
+    )
+    assert response.status_code == 200
+    client.headers["Authorization"] = "Bearer " + response.json()["token"]
+
+
 def register(client, **overrides):
     response = client.post("/api/v1/sandboxes", json={**PAYLOAD, **overrides}, headers=HEADERS)
     assert response.status_code == 201
@@ -182,8 +190,11 @@ def test_cors_has_exact_origin(client):
 
 def test_api_restart_keeps_records_and_readiness_fails_without_schema(factory, settings):
     with TestClient(create_app(settings, factory), base_url="http://localhost") as first:
+        login(first)
+        token_header = first.headers["Authorization"]
         sandbox = register(first)
     with TestClient(create_app(settings, factory), base_url="http://localhost") as second:
+        second.headers["Authorization"] = token_header
         assert second.get(f"/api/v1/sandboxes/{sandbox['id']}").status_code == 200
     from protohub.persistence.database import create_session_factory
 
@@ -204,6 +215,7 @@ def test_unexpected_error_is_sanitized(factory, settings, monkeypatch):
 
     monkeypatch.setattr(app.state.repository, "list", broken)
     with TestClient(app, base_url="http://localhost", raise_server_exceptions=False) as client:
+        login(client)
         response = client.get("/api/v1/sandboxes")
     assert response.status_code == 500
     assert response.json()["error"]["code"] == "internal_error"

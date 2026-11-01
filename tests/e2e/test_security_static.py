@@ -48,11 +48,18 @@ def test_worker_rbac_has_no_secret_exec_or_cluster_writes():
 
 def test_control_plane_credentials_and_workload_mounts():
     text = Template((ROOT / "infra/kubernetes/stack.yaml.in").read_text()).substitute(
-        BUILD_TAG="test", CONSOLE_PORT="8080", PREVIEW_PORT="8081", OWNER_ID="test-owner"
+        BUILD_TAG="test",
+        CONSOLE_PORT="8080",
+        PREVIEW_PORT="8081",
+        OWNER_ID="test-owner",
+        ENVIRONMENT="test",
     )
+    resources = list(yaml.safe_load_all(text))
+    configuration = next(resource for resource in resources if resource["kind"] == "ConfigMap")
+    assert configuration["data"]["PROTOHUB_ENVIRONMENT"] == "test"
     deployments = {
         resource["metadata"]["name"]: resource
-        for resource in yaml.safe_load_all(text)
+        for resource in resources
         if resource and resource["kind"] == "Deployment"
     }
     for name, deployment in deployments.items():
