@@ -18,7 +18,10 @@ from pathlib import Path
 from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[2]
-STATE = ROOT / ".harness" / "local"
+sys.path.insert(0, str(ROOT / "harness"))
+from local_paths import LocalPathError, worklogs_dir  # noqa: E402
+
+STATE = ROOT / "worklogs" / "local"
 OWNER_LABEL = "protohub.io/owner"
 NAME = re.compile(r"protohub-[a-z0-9][a-z0-9-]{0,42}\Z")
 
@@ -66,15 +69,22 @@ def save(path: Path, value: dict) -> None:
     temporary.replace(path)
 
 
+def state_dir() -> Path:
+    # Test fixtures may substitute STATE; never migrate the real checkout for them.
+    if STATE != ROOT / "worklogs" / "local":
+        return STATE
+    return worklogs_dir(ROOT) / "local"
+
+
 def owner() -> str:
-    path = STATE / "owner.json"
+    path = state_dir() / "owner.json"
     if not path.exists():
         save(path, {"owner_id": uuid4().hex})
     return json.loads(path.read_text(encoding="utf-8"))["owner_id"]
 
 
 def config(mode: str | None = None) -> dict:
-    active = STATE / "active.json"
+    active = state_dir() / "active.json"
     previous = json.loads(active.read_text()) if active.exists() else {}
     mode = mode or os.environ.get("PROTOHUB_MODE", previous.get("mode", "mock"))
     if mode not in {"mock", "real-kind"}:
@@ -125,7 +135,10 @@ def config(mode: str | None = None) -> dict:
 
 def record_path(cfg: dict) -> Path:
     return (
-        STATE / ("kind" if cfg["mode"] == "real-kind" else "compose") / cfg["name"] / "state.json"
+        state_dir()
+        / ("kind" if cfg["mode"] == "real-kind" else "compose")
+        / cfg["name"]
+        / "state.json"
     )
 
 
@@ -545,7 +558,7 @@ def up(cfg: dict) -> None:
             {**record, **cfg, "build_tag": tag, "git_sha": revision, "bootstrap_state": "ready"},
         )
     if os.environ.get("PROTOHUB_NO_ACTIVATE") != "1":
-        save(STATE / "active.json", cfg)
+        save(state_dir() / "active.json", cfg)
     print(f"Console: http://localhost:{cfg['console_port']} ({cfg['mode']})")
     if cfg["mode"] == "real-kind":
         print(f"Preview: http://localhost:{cfg['preview_port']}/apps/<sandbox UUID>/")
@@ -684,7 +697,7 @@ def main() -> int:
                     "--max-log-requests=10",
                 )
         return 0
-    except Blocked as exc:
+    except (Blocked, LocalPathError) as exc:
         print(f"BLOCKED: {exc}", file=sys.stderr)
         return 78
     except KeyboardInterrupt:

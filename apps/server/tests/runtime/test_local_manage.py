@@ -126,7 +126,8 @@ class Cluster:
 
 
 @pytest.fixture
-def cfg(monkeypatch):
+def cfg(monkeypatch, tmp_path):
+    monkeypatch.setattr(local, "STATE", tmp_path / "local")
     monkeypatch.setattr(local, "preflight", lambda *args, **kwargs: None)
     monkeypatch.setattr(local, "verify_kind", lambda _: True)
     monkeypatch.setattr(local, "time", Clock())
@@ -441,6 +442,12 @@ def test_sample_drain_waits_for_controller_even_when_no_pods_exist(cfg, monkeypa
 
 def test_real_build_selects_server_runtime_stage_only(cfg, monkeypatch):
     calls = []
+    monkeypatch.setattr(
+        local,
+        "worklogs_dir",
+        lambda root: pytest.fail("unit build must not resolve checkout work records"),
+    )
+    monkeypatch.setattr(local, "configure_llm_secret", lambda cfg: None)
     monkeypatch.setattr(local, "time", SimpleNamespace(time=lambda: 1))
     monkeypatch.setattr(local, "existing_record", lambda _: cfg.copy())
     monkeypatch.setattr(local, "save", lambda *args: None)

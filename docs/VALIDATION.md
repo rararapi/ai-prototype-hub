@@ -11,7 +11,7 @@ WSLの `make verify` 全11ゲートがPASSしました。正確なrunは `202610
 pytest130、Vitest22、ハーネス107、実PostgreSQL4、Playwright1、実runtime8項目、
 live security5項目が成功し、必要なskipはありません。両テストclusterの回収も成功しています。
 手動ブラウザのlifecycle/counter、日常用stackのdown/up、同じPVCと管理レコードの保持も確認しました。
-生ログ・画像・JUnitはignoredな `.harness/reports/` に保持し、自動公開しません。
+生ログ・画像・JUnitはignoredな `worklogs/reports/` に保持し、自動公開しません。
 
 同じe904814の [GitHub CI](https://github.com/rararapi/ai-prototype-hub/actions/runs/41205573111) も成功し、
 DevContainerの `make check-dev` と、ホスト側の `make verify` 全11ゲートがPASSしました。
@@ -172,3 +172,12 @@ CNIによる敵対的通信隔離、任意コード、実組織SSO、LLM接続�
 初期依頼時は未pushでしたが、追加依頼によるpush後にGitHub CIも実行・成功しました。詳細は冒頭の記録に従ってください。
 Docker/WSLのcgroup v2化は2026-10-31に承認を受けて実施しました。上記の新しい記録に
 従ってreal-kindを再検証します。AI-DLC製品機能、OIDC、AKS等は別フェーズです。
+
+
+## 保存先の名称変更（2026-11-02）
+
+現在の生成先は `worklogs/`。既存の `.harness/` は同じcheckout内で一度だけ
+ディレクトリ名を変更し、所有記録・レポート・権限を保持する。
+この文書の過去の実行や、過去JSON内のパスは当時の表記を残す。
+移行後は、その先頭の `.harness/` を `worklogs/` に読み替えて実ファイルを参照する。
+過去の証跡を変更してhashや検証時点の記録を作り直さない。

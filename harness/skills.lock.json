@@ -187,9 +187,11 @@
       "license": "MIT",
       "files": {
         ".agents/skills/protohub-development/agents/openai.yaml": "deed7ce6fd2d19b97634de438fface57d6f30c22635954950199626eb002b658",
-        ".agents/skills/protohub-development/SKILL.md": "88c493c9f09f6087fcc8f7a9b50d4bcc9360f6c0300f5bcd3c4aa398d68be513"
+        ".agents/skills/protohub-development/SKILL.md": "0e62029a5fe894de4a43982360b2af179e48d7b8a7d902e7f1db3bc308c7c21f"
       },
-      "adaptations": [],
+      "adaptations": [
+        "Rename generated local work records from .harness/ to worklogs/; keep evidence and permission boundaries unchanged"
+      ],
       "license_evidence": [
         "LICENSE"
       ]

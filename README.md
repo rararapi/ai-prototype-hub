@@ -193,7 +193,10 @@ make security       # 別の専用kindで実RBAC allow/deny、Pod、Host/Origin/
 make verify         # 上記の必須full gate。CIと同じ入口
 ```
 
-結果は `.harness/reports/<run_id>/report.json` とgate別log/JUnitに保存します。
+結果は `worklogs/reports/<run_id>/report.json` とgate別log/JUnitに保存します。
+`worklogs/` は作業記録・検証結果・ローカル資源の所有記録を置くGit管理外のフォルダです。
+既存の `.harness/` は初回利用時に内容を保って移行します。詳細は
+[保存先の名称変更](docs/DEVELOPMENT_WORKFLOW.md#worklogsへの名称変更) を参照してください。
 不足環境はBLOCKED、検査失敗はFAIL、必須skip/0 testsは非合格です。E2Eとsecurityは独立fixtureを
 作成・検証・回収し、普段のstack選択を変更しません。中断時は猶予付きcleanupを行い、強制終了で
 残った場合は同runの`fixture.json`と所有記録を確認して対象を限定したresetを行ってください。

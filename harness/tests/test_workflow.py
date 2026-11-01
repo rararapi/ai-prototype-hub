@@ -22,7 +22,7 @@ class WorkflowTests(unittest.TestCase):
         self.root = Path(self.temporary.name).resolve()
         self.git("init", "--quiet")
         for path, content in {
-            ".gitignore": ".harness/\n",
+            ".gitignore": "worklogs/\n.harness/\n",
             "allowed/app.txt": "base\n",
             "outside/user.txt": "existing\n",
             "forbidden/file.txt": "keep\n",
@@ -83,7 +83,7 @@ class WorkflowTests(unittest.TestCase):
             ],
         }
         report.update(overrides)
-        path = self.write(".harness/reports/run/report.json", json.dumps(report))
+        path = self.write("worklogs/reports/run/report.json", json.dumps(report))
         return path.relative_to(self.root).as_posix(), report
 
     def review(self, **overrides):
@@ -97,7 +97,7 @@ class WorkflowTests(unittest.TestCase):
             "git_snapshot": workflow.snapshot(self.root),
         }
         report.update(overrides)
-        path = self.write(".harness/reviews/review.json", json.dumps(report))
+        path = self.write("worklogs/reviews/review.json", json.dumps(report))
         return path.relative_to(self.root).as_posix()
 
     def test_persisted_objective_ownership_and_baseline(self):
@@ -363,9 +363,36 @@ class WorkflowTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="protohub-workflow-outside-") as temporary:
             outside = Path(temporary)
             (outside / "record.json").write_text("{}")
-            (self.root / ".harness/escape").symlink_to(outside, target_is_directory=True)
+            (self.root / "worklogs/escape").symlink_to(outside, target_is_directory=True)
             with self.assertRaises(workflow.WorkflowError):
-                workflow.record(self.root, state, "gates", ".harness/escape/record.json")
+                workflow.record(self.root, state, "gates", "worklogs/escape/record.json")
+
+    def test_load_migrates_legacy_workflow_without_rewriting_record(self):
+        self.start()
+        record = self.root / "worklogs/workflows/task/workflow.json"
+        original = record.read_bytes()
+        (self.root / "worklogs").rename(self.root / ".harness")
+        loaded = workflow.load(self.root, "task")
+        self.assertEqual(loaded["id"], "task")
+        self.assertEqual(record.read_bytes(), original)
+        self.assertFalse((self.root / ".harness").exists())
+
+    def test_unignored_destination_refuses_before_migrating_legacy_records(self):
+        self.write(".gitignore", ".harness/\n")
+        self.commit()
+        owner = self.write(".harness/local/owner.json", "original-owner")
+        with self.assertRaisesRegex(workflow.WorkflowError, "ignore"):
+            self.start()
+        self.assertEqual(owner.read_text(), "original-owner")
+        self.assertFalse((self.root / "worklogs").exists())
+
+    def test_source_snapshot_excludes_current_and_legacy_generated_records(self):
+        before = workflow.snapshot(self.root)
+        self.write("worklogs/private.log", "synthetic-work-record")
+        self.write(".harness/private.log", "synthetic-legacy-record")
+        after = workflow.snapshot(self.root)
+        self.assertEqual(before["fingerprint"], after["fingerprint"])
+        self.assertFalse(after["dirty"])
 
 
 if __name__ == "__main__":

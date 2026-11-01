@@ -1,3 +1,23 @@
+# Active: generated work records renamed to worklogs (2026-11-02)
+
+- Work item worklogs-rename-20261102, clean maine366e2c; local branch codex/worklogs.
+  User selects worklogs/ for generated work records. No new publication/PR/merge requested.
+- Source tools remain harness/. API/state/provider contracts and package dependencies are unchanged.
+- Coordinator owns common paths, runner/workflow/check tooling, CI/ignore/docs/local skill hash;
+  local-worker owns launcher and migration regressions. Shared checkout Git stays coordinator-only.
+- worklogs_dir(root) verifies ignore rules in Git checkouts, rejects symlink/non-directory or
+  conflicting old/new roots, then atomically renames legacy .harness/ to worklogs/ without
+  rewriting historical JSON. It does not create a new owner alongside old receipts.
+- New paths are excluded from Git, Docker contexts, source fingerprints and hygiene scans;
+  legacy exclusions remain. CI binaries and artifacts use worklogs/. Historical paths are
+  explicitly marked as original records. Unit tests verify bytes/inode/mode preservation;
+  actual retained resource IDs/owner receipts and6 historical recorded hashes match.
+- Preliminary checks:117 stdlib harness tests PASS,71 launcher-related tests PASS with
+  readonly source bind, skills integrity PASS. Existing fixture isolation was repaired so
+  unit tests no longer invoke migration on the actual checkout.
+- Full11 gates plus independent current-source review required. Exact receipts live under
+  worklogs/workflows/worklogs-rename-20261102/; persistent DB/cluster resources are retained.
+
 # Active: post-API-rollout public recovery barrier (2026-11-01)
 
 - Work item api-rollout-recovery-20261101, clean base46755f5 on existing PR1 branch.
@@ -17,7 +37,7 @@
   are retained in runtime-checks.json. Unit regressions are collected by the existing gate.
 - Targeted deterministic regressions35 PASS; independent pre-freeze review found no blocker.
 - Final acceptance requires all11 gates and independent review on the integrated HEAD;
-  exact receipts live in .harness/workflows/api-rollout-recovery-20261101/ and PR1.
+  exact receipts live in worklogs/workflows/api-rollout-recovery-20261101/ and PR1.
 
 # Active: development login, sharing and shared LLM configuration (2026-11-01)
 
@@ -46,7 +66,7 @@
   disabled-control modal keyboard focus. Deterministic regressions retain these findings.
 - Acceptance: all eleven full gates and independent review must match the integrated HEAD.
   Exact PASS/FAIL/BLOCKED reports and source identity are recorded under ignored
-  .harness/workflows/dev-login-shared-llm-20261101/ and linked in the PR; earlier partial
+  worklogs/workflows/dev-login-shared-llm-20261101/ and linked in the PR; earlier partial
   reports do not establish final acceptance. Daily stack/PVC are retained.
 
 # ProtoHub implementation evidence
@@ -142,7 +162,7 @@ entrypoints, Preview traffic, PostgreSQL/PVC, scoped worker control and job fenc
 mock remains a separate Compose alternative. Source/config audits by Backend and
 concrete sample UI/design audit by Frontend inform generation and final review.
 
-Final integrated make/check/full evidence follows in `.harness/reports/` and docs/VALIDATION.md.
+Final integrated make/check/full evidence follows in `worklogs/reports/` and docs/VALIDATION.md.
 On 2026-10-31 the human authorized WSL/Docker Desktop updates and approved UAC on the PC.
 Both installers exited 0. Offline DB/VHDX backups, all five baseline volumes and the unrelated
 stopped container were verified; mock DB counts and HTTP recovery passed. Engine29.9.2 now

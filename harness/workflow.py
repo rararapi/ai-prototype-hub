@@ -14,10 +14,14 @@ import os
 import re
 import stat
 import subprocess
+import sys
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from uuid import uuid4
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from local_paths import LocalPathError, worklogs_dir  # noqa: E402
 
 DEFAULT_GATES = [
     "harness-self",
@@ -37,6 +41,13 @@ IDENTIFIER = re.compile(r"[a-z0-9][a-z0-9_-]{0,63}\Z")
 
 class WorkflowError(Exception):
     pass
+
+
+def records_root(root: Path) -> Path:
+    try:
+        return worklogs_dir(root)
+    except LocalPathError as exc:
+        raise WorkflowError(str(exc)) from None
 
 
 def now() -> str:
@@ -221,7 +232,7 @@ def _folder(root: Path, task_id: str) -> Path:
         raise WorkflowError(
             "Task ID must be 1-64 lowercase letters, digits, hyphens or underscores"
         )
-    result = root / ".harness/workflows" / task_id
+    result = records_root(root) / "workflows" / task_id
     if not result.resolve().is_relative_to(root):
         raise WorkflowError("Workflow evidence directory escapes the repository")
     return result
@@ -295,7 +306,9 @@ def start(
             "Allowed paths, required gates and a repair budget of 1-10 are required"
         )
     allowed = list(dict.fromkeys(scope_path(path) for path in allowed))
-    forbidden = list(dict.fromkeys([".git/", ".harness/", *[scope_path(p) for p in forbidden]]))
+    forbidden = list(
+        dict.fromkeys([".git/", "worklogs/", ".harness/", *[scope_path(p) for p in forbidden]])
+    )
     if any(not IDENTIFIER.fullmatch(name) for name in required_gates):
         raise WorkflowError("Invalid required gate ID")
     ownership = owners or {path: "coordinator" for path in allowed}
@@ -314,7 +327,7 @@ def start(
         ["git", "check-ignore", "-q", str(folder / "workflow.json")], cwd=root, check=False
     )
     if ignored.returncode != 0:
-        raise WorkflowError("Add .harness/ to repository ignore rules before creating a workflow")
+        raise WorkflowError("Add worklogs/ to repository ignore rules before creating a workflow")
     baseline = snapshot(root)
     contract_hashes = {}
     for value in contracts or []:
@@ -431,9 +444,9 @@ def repair(state: dict, cause: str, action: str, next_check: str) -> None:
 
 def artifact(root: Path, value: str) -> tuple[Path, dict, str]:
     path = (root / value).resolve()
-    evidence_root = (root / ".harness").resolve()
+    evidence_root = records_root(root).resolve()
     if not evidence_root.is_relative_to(root) or not path.is_relative_to(evidence_root):
-        raise WorkflowError("Evidence must be inside this repository's ignored .harness/")
+        raise WorkflowError("Evidence must be inside this repository's ignored worklogs/")
     try:
         if path.stat().st_size > 8 * 1024 * 1024:
             raise WorkflowError("Evidence JSON exceeds the bounded 8 MiB size")

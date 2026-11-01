@@ -1,5 +1,6 @@
 # Merge with existing rules; never overwrite unrelated entries.
 .harness/
+worklogs/
 .env
 .env.*
 !.env.example

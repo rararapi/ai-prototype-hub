@@ -22,7 +22,7 @@ Build a local-first prototype hosting MVP: register a trusted sample, start it, 
 6. Use WSL2/Linux Bash for development. Keep source under the Linux filesystem. Reuse the existing Docker engine; do not install/restart Docker, change WSL settings, or change user groups without approval.
 7. Every new behavior needs tests. Use deterministic tests for state transitions and jobs; use real PostgreSQL and kind for integration evidence. A mocked API/runtime test is not real runtime verification.
 8. Run the relevant gates, then the full gate on the integrated branch. Record PASS, FAIL, or BLOCKED with evidence. Missing tools, empty test suites, ignored failures, and skipped required checks are not success.
-9. Treat logs/reports as potentially sensitive. Never dump all environment variables, kubeconfigs, authorization headers, or tokens. Keep local generated evidence under ignored `.harness/`.
+9. Treat logs/reports as potentially sensitive. Never dump all environment variables, kubeconfigs, authorization headers, or tokens. Keep local generated evidence under ignored `worklogs/`.
 10. Keep this file short. Put requirements in the spec, commands in scripts, and lessons in focused tests or decision records.
 
 ## Safety boundaries

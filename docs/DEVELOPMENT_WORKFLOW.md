@@ -22,7 +22,7 @@ OS設定、権限追加、課金、秘密情報、破壊操作、外部公開に
 ## 作業を始める
 
 WSL/Linuxのリポジトリrootで実行する。Python標準ライブラリとGitだけを使う。
-作業記録はignoredな `.harness/workflows/<id>/workflow.json` に保存される。
+作業記録はignoredな `worklogs/workflows/<id>/workflow.json` に保存される。
 同じIDを上書きしない。Gitのpush、commit、checkout、依存installはこのCLIから行わない。
 
 ```bash
@@ -43,7 +43,7 @@ python3 harness/workflow.py start \
 末尾が `/` のscopeはディレクトリ配下、それ以外はファイルとの完全一致。globは使わない。
 各allowed scopeには一人のownerを割り当てる。owner指定を省略するとcoordinatorになる。
 重複するallowed scope、絶対path、`..`、symlinkによるroot外への逸脱を拒否する。
-`.git/` と `.harness/` はソース変更の対象外として常に扱う。
+`.git/` と `worklogs/` はソース変更の対象外として常に扱う。
 
 `--required-gate` を省略するとMVPの全必須ゲートになる。UIの表示修正とruntime変更では
 必要な検査が異なるため、作業開始時に目的と影響範囲に合わせて選ぶ。
@@ -87,9 +87,9 @@ repairの回数はこの作業項目の明示的な修復予算。尽きたら�
 ```bash
 make check
 python3 harness/workflow.py record-gates --id preview-status-fix \
-  --file .harness/reports/<今回のrun_id>/report.json
+  --file worklogs/reports/<今回のrun_id>/report.json
 python3 harness/workflow.py record-review --id preview-status-fix \
-  --file .harness/reviews/<今回のreview_id>.json
+  --file worklogs/reviews/<今回のreview_id>.json
 python3 harness/workflow.py finish --id preview-status-fix
 ```
 
@@ -118,3 +118,17 @@ submoduleを含むrepositoryは不完全なsnapshotを作らず拒否し、別�
 skillsは、この手順の中で必要な道具を選ぶために使う。主要な実装・レビュー・デバッグの
 skillを作業の性質に応じて適用し、skillがあるという理由だけで目的や公開範囲を拡大しない。
 このworkflowが特定のLLM、有料API、クラウド、プロジェクトlicenseを選ぶことはない。
+
+
+## worklogsへの名称変更
+
+`worklogs/` は作業記録、検証結果、ローカル起動資源の所有記録を保存するGit管理外の
+フォルダ。ツール本体の `harness/` と区別する。
+既存checkoutの `.harness/` は、更新後の検証・workflow・起動/停止コマンドの初回利用時に
+内容を変えずに `worklogs/` へ移す。Gitのignore設定を確認してから移行する。
+`.gitignore` / `.dockerignore` / 公開前チェックは新旧両方を生成物として除外する。
+
+両方のフォルダがある場合は自動で上書き・統合せず停止する。所有IDを混ぜると起動済み資源の
+管理を失うため、両方を保持して内容・所有資源を確認する。symlinkや通常ファイルも拒否する。
+過去のJSONは当時のパスとhashを残す。新しい検証・レビューは新しい保存先で取り直す。
+会社PCには記録をコピーせずcloneから新規作成する。稼働資源があるPCの所有記録は保持する。
