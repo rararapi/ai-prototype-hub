@@ -15,7 +15,7 @@
 - 実kind/実HTTP/Playwrightでlifecycle、2アプリ独立、timeout、TTL、cleanupを検証する。
 - security gateでは非許可入力、RBAC実allow/deny、Pod設定、SSRF/Host/Origin/secret漏出を検査する。
 - remote Docker endpointを拒否、localhost bind、所有外資源に触れないことを検査する。
-- 証跡を `.harness/` に集約し、gitへ秘密やbrowser traceを入れない。
+- 証跡を `worklogs/` に集約し、gitへ秘密やbrowser traceを入れない。
 - CI最小権限、外部PRに鍵を渡さない。現時点で検証した依存版/action SHAを使用する。
 
 ## 統合で守ること

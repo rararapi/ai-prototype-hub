@@ -27,7 +27,7 @@ DOCTOR_SPEC.loader.exec_module(doctor)
 
 class HarnessTests(unittest.TestCase):
     def test_source_changes_cannot_pass_while_dirty_stays_true(self):
-        (self.root / ".gitignore").write_text(".harness/\n", encoding="utf-8")
+        (self.root / ".gitignore").write_text("worklogs/\n", encoding="utf-8")
         (self.root / "owned.txt").write_text("before", encoding="utf-8")
         for argv in (
             ["git", "init", "-q"],
@@ -343,7 +343,7 @@ class HarnessTests(unittest.TestCase):
             self.assertNotEqual(process.returncode, 0)
             self.assertTrue((self.root / "fixture-cleaned").exists())
             self.assertFalse((self.root / "external-resource").exists())
-            paths = list((self.root / ".harness/reports").glob("*/report.json"))
+            paths = list((self.root / "worklogs/reports").glob("*/report.json"))
             self.assertEqual(len(paths), 1)
             result = json.loads(paths[0].read_text(encoding="utf-8"))
             self.assertTrue(result["interrupted"])
@@ -534,7 +534,7 @@ class HarnessTests(unittest.TestCase):
             process.send_signal(signum)
             output, _ = process.communicate(timeout=5)
             self.assertNotEqual(process.returncode, 0, output.decode(errors="replace"))
-            reports = list((self.root / ".harness" / "reports").glob("*/report.json"))
+            reports = list((self.root / "worklogs" / "reports").glob("*/report.json"))
             self.assertEqual(len(reports), 1)
             result = json.loads(reports[0].read_text(encoding="utf-8"))
             self.assertEqual(result["status"], "FAIL")

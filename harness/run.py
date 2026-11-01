@@ -18,6 +18,7 @@ from pathlib import Path
 from uuid import uuid4
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from local_paths import LocalPathError, worklogs_dir  # noqa: E402
 from workflow import WorkflowError, snapshot  # noqa: E402
 
 MAX_LOG_BYTES = 1024 * 1024
@@ -247,7 +248,7 @@ def private_write(path: Path, value: str) -> None:
 def run(root: Path, group: str, manifest_path: str = "harness/gates.json") -> dict:
     root = root.resolve()
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid4().hex[:8]
-    directory = root / ".harness" / "reports" / run_id
+    directory = worklogs_dir(root) / "reports" / run_id
     directory.mkdir(parents=True, mode=0o700)
     directory.chmod(0o700)
     report = {
@@ -405,7 +406,11 @@ def main() -> int:
     parser.add_argument("--group", default="quick")
     parser.add_argument("--manifest", default="harness/gates.json")
     args = parser.parse_args()
-    report = run(Path(__file__).resolve().parents[1], args.group, args.manifest)
+    try:
+        report = run(Path(__file__).resolve().parents[1], args.group, args.manifest)
+    except LocalPathError as exc:
+        print(f"BLOCKED local work records: {exc}")
+        return 2
     print(report["report_path"])
     return {"PASS": 0, "FAIL": 1, "BLOCKED": 2}[report["status"]]
 

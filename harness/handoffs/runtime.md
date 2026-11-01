@@ -99,3 +99,7 @@ Docker Hub official API tags/digests verified read-only; app image builds remain
 Official references: [kind v0.33.0](https://github.com/kubernetes-sigs/kind/releases/tag/v0.33.0),
 [Python](https://hub.docker.com/_/python), [Node](https://hub.docker.com/_/node),
 [PostgreSQL](https://hub.docker.com/_/postgres), [nginx](https://hub.docker.com/_/nginx).
+
+
+保存先の補足（2026-11-02）: 現在の作業記録・所有記録は `worklogs/` に保存する。
+上記の実行証跡パスは当時の表記であり、移行後は先頭の `.harness/` を読み替える。

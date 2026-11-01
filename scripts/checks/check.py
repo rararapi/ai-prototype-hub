@@ -20,6 +20,7 @@ SERVER = ROOT / "apps/server"
 WEB = ROOT / "apps/web"
 sys.path.insert(0, str(ROOT / "harness"))
 import doctor  # noqa: E402
+from local_paths import worklogs_dir  # noqa: E402
 
 
 class MissingPrerequisite(Exception):
@@ -47,7 +48,7 @@ def evidence(gate: str) -> Path:
         result = Path(base) / gate
     else:
         run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid4().hex[:8]
-        result = ROOT / ".harness/reports" / run_id / gate
+        result = worklogs_dir(ROOT) / "reports" / run_id / gate
     result.mkdir(parents=True, exist_ok=True, mode=0o700)
     print(f"Evidence: {result}", flush=True)
     return result
@@ -171,6 +172,7 @@ def public_hygiene(report: Path) -> None:
         ".venv",
         ".uv-cache",
         "node_modules",
+        "worklogs",
         ".harness",
         "dist",
         "build",

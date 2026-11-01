@@ -80,3 +80,7 @@ reviewed sandbox escalation for localhost test sockets only; no OS configuration
 - Internal API probes/proxies must send `Host: localhost`. Mutations need JSON `{}` even DELETE.
 - Unit selection must use `-m "not postgres"`; integration selects `-m postgres`. A missing real
   DB should be detected by the harness preflight, never converted into an empty passing suite.
+
+
+保存先の補足（2026-11-02）: 現在の作業記録・所有記録は `worklogs/` に保存する。
+上記の実行証跡パスは当時の表記であり、移行後は先頭の `.harness/` を読み替える。

@@ -127,7 +127,7 @@ kind node image、アプリimage、Kubernetes clientの互換性を記録する�
 
 - 各worktreeのCompose project、DB、volume、network、portを分離する。
 - 統合kindの作成・apply・削除は親だけ。
-- 自分が作った資源名とラベルの記録を `.harness/` に保持する。
+- 自分が作った資源名とラベルの記録を `worklogs/` に保持する。
 - `make down` はデータを残して停止。kindの通常停止はworkload停止として実装し、クラスタ削除は行わない。
 - クラスタ/volume削除は `make reset-local` など別操作にし、対象名を表示して明示opt-inを要求する。
 - `docker system prune`、全volume削除、ユーザー既存kindクラスタ削除は禁止。

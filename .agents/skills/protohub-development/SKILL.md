@@ -49,7 +49,7 @@ and an independent review for the same current snapshot with the workflow CLI. P
 review findings and resolutions. `workflow.py finish` refuses stale, changed, failed or
 BLOCKED evidence and missing review. A local commit changes source identity; evidence
 must match the identity claimed at handoff. Keep generated task/evidence data in ignored
-`.harness/`; publish no secrets, traces, real data or external resources implicitly.
+`worklogs/`; publish no secrets, traces, real data or external resources implicitly.
 
 Report implemented behavior, source identity, gates actually run and residual BLOCKED
 checks. Distinguish mock, real PostgreSQL, kind/HTTP and browser evidence. This workflow

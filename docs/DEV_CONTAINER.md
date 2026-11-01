@@ -235,7 +235,7 @@ cgroup版は切り替わりません。今回確認したDocker daemonはcgroup 
 
 2026-10-30、既存のWSL2 Ubuntu / Dockerで、公式Dev Container CLI 0.90.0を使って実検証しました。
 設定の初回実装commitは `6d23869`。この後のCI事前検査・CLI固定と文書修正を含む最終sourceと
-再検査reportの対応は、ignoredな `.harness/reports/devcontainer-20261030/final-evidence.json` に記録します。
+再検査reportの対応は、ignoredな `worklogs/reports/devcontainer-20261030/final-evidence.json` に記録します。
 
 | 実行・確認 | 結果 |
 | --- | --- |
@@ -253,6 +253,6 @@ cgroup版は切り替わりません。今回確認したDocker daemonはcgroup 
 | real-kind / 実Pod・HTTP / Playwright / live RBAC | 引き続きBLOCKED。ホストのcgroup v1が原因 |
 
 CLIのstdout/stderr、権限probe、固定volume/所有containerのreceipt、再作成記録は
-`.harness/reports/devcontainer-20261030/` に集約します。通常のharness gateは各run IDの
+`worklogs/reports/devcontainer-20261030/` に集約します。通常のharness gateは各run IDの
 `report.json` とlog/JUnitを使います。これらはローカル証跡で、リポジトリへcommitしません。
 OS設定・ユーザーグループ・Dockerサービスは変更していません。

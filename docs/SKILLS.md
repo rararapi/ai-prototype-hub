@@ -70,7 +70,7 @@ $security-best-practices APIとpreviewのOrigin/Host・固定upstream境界を�
 スキルは作業方法の補助であり、検査結果の代用にはしない。UIの見た目やcomponent mock
 が良くても、実PostgreSQL・Pod・HTTP・停止・削除の成功とは記録しない。
 既存のpytest、Vitest、Node Playwrightと `make check` / `make verify` を検証入口として使う。
-証跡は今回runの `.harness/` 配下に残す。
+証跡は今回runの `worklogs/` 配下に残す。
 
 スキルの一般的な推奨と、ProtoHubの仕様・利用者の指示が違う場合は、変更の目的と
 既存の安全境界を優先して適用範囲を判断する。通常の工程移動のたびに承認を追加せず、

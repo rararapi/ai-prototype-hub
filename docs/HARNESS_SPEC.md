@@ -75,7 +75,7 @@ gateの `blocked_exit_codes` は任意。doctorは `[2]`、アプリ検証wrappe
 
 wrapperは子検証コマンドの非0終了を1へ正規化し、元の終了コードをlogへ記録する。`set -e` だけで子の78をそのまま伝播させない。自前preflight78→BLOCKED、子test78→FAIL、assertion failure→FAILを回帰テストする。
 
-結果を `.harness/reports/<run_id>/report.json` とgate別logに残す。git SHA、dirty状態、開始時刻、gate所要時間・結果、失敗/不足理由、中断状態を記録する。ログはbest-effort redactionを行うが完全保証ではない。ログ・スクリーンショットは公開commitせず、利用者情報や秘密を除去してから共有する。
+結果を `worklogs/reports/<run_id>/report.json` とgate別logに残す。git SHA、dirty状態、開始時刻、gate所要時間・結果、失敗/不足理由、中断状態を記録する。ログはbest-effort redactionを行うが完全保証ではない。ログ・スクリーンショットは公開commitせず、利用者情報や秘密を除去してから共有する。
 
 各テストscriptは必要に応じてJUnit、Playwright HTML/trace、Pod一覧などの証跡を同run配下に保存する。これらは今回の実行によるものと分かる時刻/commit/run IDを持つ。過去のPASSをコピーしない。
 
