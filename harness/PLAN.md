@@ -1,3 +1,24 @@
+# Active: post-API-rollout public recovery barrier (2026-11-01)
+
+- Work item api-rollout-recovery-20261101, clean base46755f5 on existing PR1 branch.
+  User authorizes repair, regressions, full verification and PR update; no merge/deploy.
+- Failed push CI41288648133 artifact run20261101T082323Z-92ac93ba records browser2 PASS,
+  restart/read persistence PASS, then POST /sandboxes returns nginx502. Same-source local
+  and PR CI41288670157 passed. Evidence establishes a readiness race, not an nginx defect.
+- Coordinator owns tests/e2e/, apps/server/tests/runtime/, HARNESS_SPEC and this PLAN;
+  rollout_review independently reviews without tracked edits. API/state/provider contracts,
+  production proxy/auth/runtime, dependencies and CI permissions are unchanged.
+- Recovery contract: after rollout, require old Pods absent, exactly one different Ready
+  API Pod UID, then matching retained-record GETs through console spanning3 stable seconds.
+  Reset on transient502/503/504/transport failures or Pod/UID changes; fail immediately for
+  permanent HTTP/auth/malformed/wrong-record responses. All probes share a120s deadline.
+- POST and whole-scenario retries remain disabled. Real E2E repeats3 rollouts then one
+  registration each, asserting exactly one matching ID; sanitized recovery observations
+  are retained in runtime-checks.json. Unit regressions are collected by the existing gate.
+- Targeted deterministic regressions35 PASS; independent pre-freeze review found no blocker.
+- Final acceptance requires all11 gates and independent review on the integrated HEAD;
+  exact receipts live in .harness/workflows/api-rollout-recovery-20261101/ and PR1.
+
 # Active: development login, sharing and shared LLM configuration (2026-11-01)
 
 - Work item: dev-login-shared-llm-20261101, base a5ab05b, clean main; branch
