@@ -48,6 +48,7 @@ class SandboxRow(Base):
     )
 
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    owner_email: Mapped[str | None] = mapped_column(String(254), nullable=True, index=True)
     name: Mapped[str] = mapped_column(String(64))
     template_id: Mapped[str] = mapped_column(String(32), default="hello-web")
     ttl_seconds: Mapped[int] = mapped_column(default=900)
@@ -98,3 +99,26 @@ class AuditEventRow(Base):
     operation_id: Mapped[UUID | None] = mapped_column(Uuid, nullable=True)
     event: Mapped[str] = mapped_column(String(40))
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
+
+
+class UserRow(Base):
+    __tablename__ = "users"
+
+    email: Mapped[str] = mapped_column(String(254), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
+
+
+class SessionRow(Base):
+    __tablename__ = "sessions"
+
+    token_digest: Mapped[str] = mapped_column(String(64), primary_key=True)
+    email: Mapped[str] = mapped_column(ForeignKey("users.email"), index=True)
+    expires_at: Mapped[datetime] = mapped_column(UTCDateTime(), index=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
+
+
+class SandboxShareRow(Base):
+    __tablename__ = "sandbox_shares"
+
+    sandbox_id: Mapped[UUID] = mapped_column(ForeignKey("sandboxes.id"), primary_key=True)
+    email: Mapped[str] = mapped_column(String(254), primary_key=True, index=True)

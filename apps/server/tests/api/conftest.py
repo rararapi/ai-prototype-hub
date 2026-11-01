@@ -53,4 +53,11 @@ def jobs(factory, settings, clock):
 @pytest.fixture
 def client(factory, settings):
     with TestClient(create_app(settings, factory), base_url="http://localhost") as client:
+        response = client.post(
+            "/api/v1/auth/login",
+            json={"email": "owner@example.test"},
+            headers={"X-ProtoHub-Client": "console"},
+        )
+        assert response.status_code == 200
+        client.headers["Authorization"] = "Bearer " + response.json()["token"]
         yield client

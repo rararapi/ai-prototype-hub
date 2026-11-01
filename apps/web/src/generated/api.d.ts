@@ -4,6 +4,40 @@
  */
 
 export interface paths {
+    "/api/v1/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Me */
+        get: operations["me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Logout */
+        post: operations["logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/healthz": {
         parameters: {
             query?: never;
@@ -159,6 +193,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Login */
+        post: operations["login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sandboxes/{sandbox_id}/shares": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Shares */
+        get: operations["get_shares"];
+        /** Set Shares */
+        put: operations["set_shares"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -220,6 +289,32 @@ export interface components {
              */
             request_id: string;
         };
+        /** LoginRequest */
+        LoginRequest: {
+            /** Email */
+            email: string;
+        };
+        /** LoginSession */
+        LoginSession: {
+            /** Token */
+            token: string;
+            /** Email */
+            email: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+        };
+        /** LogoutResult */
+        LogoutResult: {
+            /**
+             * Status
+             * @default ok
+             * @constant
+             */
+            status: "ok";
+        };
         /** Operation */
         Operation: {
             /**
@@ -255,8 +350,15 @@ export interface components {
          * @enum {string}
          */
         OperationStatus: "queued" | "running" | "succeeded" | "failed" | "superseded";
+        /** Principal */
+        Principal: {
+            /** Email */
+            email: string;
+        };
         /** Sandbox */
         Sandbox: {
+            /** Owner Email */
+            owner_email?: string | null;
             /**
              * Id
              * Format: uuid
@@ -301,6 +403,11 @@ export interface components {
          * @enum {string}
          */
         SandboxStatus: "stopped" | "starting" | "running" | "stopping" | "deleting" | "deleted" | "failed";
+        /** ShareList */
+        ShareList: {
+            /** Emails */
+            emails?: string[];
+        };
         /** SystemInfo */
         SystemInfo: {
             /**
@@ -311,9 +418,9 @@ export interface components {
             /**
              * Auth Mode
              * @default local-dev
-             * @constant
+             * @enum {string}
              */
-            auth_mode: "local-dev";
+            auth_mode: "local-dev" | "disabled";
             /** Constraints */
             constraints: string[];
         };
@@ -350,6 +457,349 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    me: {
+        parameters: {
+            query?: never;
+            header: {
+                Authorization: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "email": "owner@example.test"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["Principal"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_400",
+                     *         "message": "Invalid request",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Development login required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_401",
+                     *         "message": "Development login required",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Local origin, host or client header rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_403",
+                     *         "message": "Local origin, host or client header rejected",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_404",
+                     *         "message": "Resource not found",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description State conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_409",
+                     *         "message": "State conflict",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "validation_error",
+                     *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Internal error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_500",
+                     *         "message": "Internal error",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Dependency unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_503",
+                     *         "message": "Dependency unavailable",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+        };
+    };
+    logout: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-ProtoHub-Client": "console";
+                Authorization: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "status": "ok"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["LogoutResult"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_400",
+                     *         "message": "Invalid request",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Development login required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_401",
+                     *         "message": "Development login required",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Local origin, host or client header rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_403",
+                     *         "message": "Local origin, host or client header rejected",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_404",
+                     *         "message": "Resource not found",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description State conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_409",
+                     *         "message": "State conflict",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "validation_error",
+                     *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Internal error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_500",
+                     *         "message": "Internal error",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Dependency unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_503",
+                     *         "message": "Dependency unavailable",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+        };
+    };
     health: {
         parameters: {
             query?: never;
@@ -384,6 +834,24 @@ export interface operations {
                      *       "error": {
                      *         "code": "http_400",
                      *         "message": "Invalid request",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Development login required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_401",
+                     *         "message": "Development login required",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -542,6 +1010,24 @@ export interface operations {
                     "application/json": components["schemas"]["HttpError"];
                 };
             };
+            /** @description Development login required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_401",
+                     *         "message": "Development login required",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
             /** @description Local origin, host or client header rejected */
             403: {
                 headers: {
@@ -691,6 +1177,24 @@ export interface operations {
                      *       "error": {
                      *         "code": "http_400",
                      *         "message": "Invalid request",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Development login required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_401",
+                     *         "message": "Development login required",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -855,6 +1359,24 @@ export interface operations {
                     "application/json": components["schemas"]["HttpError"];
                 };
             };
+            /** @description Development login required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_401",
+                     *         "message": "Development login required",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
             /** @description Local origin, host or client header rejected */
             403: {
                 headers: {
@@ -968,7 +1490,9 @@ export interface operations {
     list_sandboxes: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                Authorization: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -986,6 +1510,7 @@ export interface operations {
                      *         {
                      *           "id": "00000000-0000-4000-8000-000000000001",
                      *           "name": "Example app",
+                     *           "owner_email": "owner@example.test",
                      *           "template_id": "hello-web",
                      *           "desired_state": "stopped",
                      *           "status": "stopped",
@@ -1010,6 +1535,24 @@ export interface operations {
                      *       "error": {
                      *         "code": "http_400",
                      *         "message": "Invalid request",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Development login required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_401",
+                     *         "message": "Development login required",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -1132,6 +1675,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-ProtoHub-Client": "console";
+                Authorization: string;
             };
             path?: never;
             cookie?: never;
@@ -1152,6 +1696,7 @@ export interface operations {
                      * @example {
                      *       "id": "00000000-0000-4000-8000-000000000001",
                      *       "name": "Example app",
+                     *       "owner_email": "owner@example.test",
                      *       "template_id": "hello-web",
                      *       "desired_state": "stopped",
                      *       "status": "stopped",
@@ -1174,6 +1719,24 @@ export interface operations {
                      *       "error": {
                      *         "code": "http_400",
                      *         "message": "Invalid request",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Development login required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_401",
+                     *         "message": "Development login required",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -1294,7 +1857,9 @@ export interface operations {
     get_sandbox: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                Authorization: string;
+            };
             path: {
                 sandbox_id: string;
             };
@@ -1312,6 +1877,7 @@ export interface operations {
                      * @example {
                      *       "id": "00000000-0000-4000-8000-000000000001",
                      *       "name": "Example app",
+                     *       "owner_email": "owner@example.test",
                      *       "template_id": "hello-web",
                      *       "desired_state": "stopped",
                      *       "status": "stopped",
@@ -1334,6 +1900,24 @@ export interface operations {
                      *       "error": {
                      *         "code": "http_400",
                      *         "message": "Invalid request",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Development login required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_401",
+                     *         "message": "Development login required",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -1456,6 +2040,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-ProtoHub-Client": "console";
+                Authorization: string;
             };
             path: {
                 sandbox_id: string;
@@ -1496,6 +2081,24 @@ export interface operations {
                      *       "error": {
                      *         "code": "http_400",
                      *         "message": "Invalid request",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Development login required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_401",
+                     *         "message": "Development login required",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -1618,6 +2221,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-ProtoHub-Client": "console";
+                Authorization: string;
             };
             path: {
                 sandbox_id: string;
@@ -1658,6 +2262,24 @@ export interface operations {
                      *       "error": {
                      *         "code": "http_400",
                      *         "message": "Invalid request",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Development login required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_401",
+                     *         "message": "Development login required",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -1780,6 +2402,7 @@ export interface operations {
             query?: never;
             header: {
                 "X-ProtoHub-Client": "console";
+                Authorization: string;
             };
             path: {
                 sandbox_id: string;
@@ -1820,6 +2443,24 @@ export interface operations {
                      *       "error": {
                      *         "code": "http_400",
                      *         "message": "Invalid request",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Development login required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_401",
+                     *         "message": "Development login required",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -1940,7 +2581,9 @@ export interface operations {
     get_operation: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                Authorization: string;
+            };
             path: {
                 operation_id: string;
             };
@@ -1980,6 +2623,556 @@ export interface operations {
                      *       "error": {
                      *         "code": "http_400",
                      *         "message": "Invalid request",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Development login required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_401",
+                     *         "message": "Development login required",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Local origin, host or client header rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_403",
+                     *         "message": "Local origin, host or client header rejected",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_404",
+                     *         "message": "Resource not found",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description State conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_409",
+                     *         "message": "State conflict",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "validation_error",
+                     *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Internal error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_500",
+                     *         "message": "Internal error",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Dependency unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_503",
+                     *         "message": "Dependency unavailable",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+        };
+    };
+    login: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-ProtoHub-Client": "console";
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "token": "synthetic-session-token",
+                     *       "email": "owner@example.test",
+                     *       "expires_at": "2026-11-02T00:00:00Z"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["LoginSession"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_400",
+                     *         "message": "Invalid request",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Development login required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_401",
+                     *         "message": "Development login required",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Local origin, host or client header rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_403",
+                     *         "message": "Local origin, host or client header rejected",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_404",
+                     *         "message": "Resource not found",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description State conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_409",
+                     *         "message": "State conflict",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "validation_error",
+                     *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Internal error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_500",
+                     *         "message": "Internal error",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Dependency unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_503",
+                     *         "message": "Dependency unavailable",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+        };
+    };
+    get_shares: {
+        parameters: {
+            query?: never;
+            header: {
+                Authorization: string;
+            };
+            path: {
+                sandbox_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "emails": [
+                     *         "reader@example.test"
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ShareList"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_400",
+                     *         "message": "Invalid request",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Development login required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_401",
+                     *         "message": "Development login required",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Local origin, host or client header rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_403",
+                     *         "message": "Local origin, host or client header rejected",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_404",
+                     *         "message": "Resource not found",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description State conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_409",
+                     *         "message": "State conflict",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "validation_error",
+                     *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Internal error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_500",
+                     *         "message": "Internal error",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Dependency unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_503",
+                     *         "message": "Dependency unavailable",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+        };
+    };
+    set_shares: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-ProtoHub-Client": "console";
+                Authorization: string;
+            };
+            path: {
+                sandbox_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShareList"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "emails": [
+                     *         "reader@example.test"
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ShareList"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_400",
+                     *         "message": "Invalid request",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Development login required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_401",
+                     *         "message": "Development login required",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }

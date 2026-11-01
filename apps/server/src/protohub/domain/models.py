@@ -3,7 +3,7 @@ from enum import StrEnum
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class DesiredState(StrEnum):
@@ -60,6 +60,7 @@ class CreateSandbox(DTO):
 
 
 class Sandbox(DTO):
+    owner_email: str | None = None
     id: UUID
     name: str
     template_id: Literal["hello-web"]
@@ -102,9 +103,50 @@ class TemplateList(DTO):
 
 class SystemInfo(DTO):
     runtime_mode: Literal["mock", "real-kind"]
-    auth_mode: Literal["local-dev"] = "local-dev"
+    auth_mode: Literal["local-dev", "disabled"] = "local-dev"
     constraints: list[str]
 
 
 class Health(DTO):
     status: Literal["ok"] = "ok"
+
+
+class LoginRequest(DTO):
+    email: str = Field(min_length=3, max_length=254)
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        import re
+
+        value = value.strip().lower()
+        pattern = (
+            r"[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@"
+            r"[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+"
+        )
+        if not re.fullmatch(pattern, value):
+            raise ValueError("Enter a valid email address")
+        return value
+
+
+class Principal(DTO):
+    email: str
+
+
+class LoginSession(DTO):
+    token: str
+    email: str
+    expires_at: datetime
+
+
+class LogoutResult(DTO):
+    status: Literal["ok"] = "ok"
+
+
+class ShareList(DTO):
+    emails: list[str] = Field(default_factory=list, max_length=100)
+
+    @field_validator("emails")
+    @classmethod
+    def normalize_emails(cls, values: list[str]) -> list[str]:
+        return sorted({LoginRequest(email=value).email for value in values})

@@ -1,5 +1,7 @@
 from typing import Literal
+from uuid import UUID
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,3 +18,14 @@ class Settings(BaseSettings):
     operation_timeout_seconds: int = 90
     poll_interval_seconds: float = 0.5
     max_attempts: int = 3
+
+    environment: Literal["local", "development", "test", "production"] = "local"
+    llm_api_key: SecretStr | None = None
+
+    @property
+    def dev_login_enabled(self) -> bool:
+        return self.environment in {"local", "development", "test"}
+
+    def resolve_llm_api_key(self, sandbox_id: UUID | None = None) -> SecretStr | None:
+        """All apps use the server key; per-app overrides are a future extension."""
+        return self.llm_api_key

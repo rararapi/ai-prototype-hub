@@ -1,3 +1,33 @@
+# Active: development login, sharing and shared LLM configuration (2026-11-01)
+
+- Work item: dev-login-shared-llm-20261101, base a5ab05b, clean main; branch
+  codex/dev-login-shared-llm. User explicitly authorizes implementation, tests and PR.
+- Shared checkout: coordinator alone performs Git, dependency and generated-contract operations.
+- Frozen contract: POST auth/login {email} returns {token,email,expires_at}; GET auth/me
+  returns {email}; POST auth/logout {} revokes bearer session. Sessions expire after 24h,
+  random token stored hashed in PostgreSQL, no authentication cookies or preview forwarding.
+- Auth exists only in local/development/test environments. Production disables login and
+  protected endpoints. Email-only login is impersonation for trusted local development.
+- Sandbox owner_email is nullable only for legacy records. New registrations bind server-side
+  to principal. Legacy rows remain retained and hidden; no automatic user adoption.
+- List/detail/operation visibility: owner or explicit shared recipient. Lifecycle/share writes
+  are owner-only. PUT shares {emails} replaces up to100 normalized recipients; GET shares
+  is owner-only. Unauthorized resource IDs return404. Shared preview stays trusted localhost
+  sample only; this change does not enable private or untrusted hosted app authentication.
+- Shared LLM key: PROTOHUB_LLM_API_KEY SecretStr, server-only resolver for all app IDs.
+  No real key, billable calls, arbitrary code or new LLM provider is introduced.
+- Ownership: coordinator domain/contracts/generated types, settings, infra/key plumbing,
+  docs/PLAN and integration; Backend API/persistence/migrations/server tests; Frontend
+  web source/styles/tests except generated types; QA tests/integration and tests/e2e.
+- Preliminary evidence: backend API70 PASS, frontend36 PASS plus lint/type/build; real
+  PostgreSQL5 PASS including migration/session/ownership/share persistence and revocation.
+- Independent review repaired named-stack environment persistence on success/failure and
+  disabled-control modal keyboard focus. Deterministic regressions retain these findings.
+- Acceptance: all eleven full gates and independent review must match the integrated HEAD.
+  Exact PASS/FAIL/BLOCKED reports and source identity are recorded under ignored
+  .harness/workflows/dev-login-shared-llm-20261101/ and linked in the PR; earlier partial
+  reports do not establish final acceptance. Daily stack/PVC are retained.
+
 # ProtoHub implementation evidence
 
 ## Current acceptance and main integration (2026-10-31)

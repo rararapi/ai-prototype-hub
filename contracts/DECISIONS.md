@@ -63,3 +63,18 @@ network requests remain at-least-once and converge through generation checks and
 QA fixture launches set `PROTOHUB_NO_ACTIVATE=1` so E2E/security never replace the developer's
 active local stack selection. Their cluster, ports, receipts and cleanup remain independent.
 
+
+
+## 2026-11-01: development email sessions and app visibility
+
+User authorizes development email login, filtered owned/shared apps, shared LLM configuration
+and PR creation. Auth routes login/me/logout use opaque24h bearer sessions, never cookies.
+All management data routes require a current principal; list/detail/operation access is
+owner-or-explicit-recipient, lifecycle/share writes owner-only, inaccessible IDs404.
+GET/PUT shares has normalized maximum100 email recipients, owner-only replacement semantics.
+Sandbox adds owner_email; nullable legacy rows are preserved and hidden, never auto-adopted.
+Production disables this impersonation login and protected management APIs. Existing localhost,
+JSON/custom header, exact Origin and host boundaries remain. Preview stays a trusted fixed
+sample endpoint without private data authorization; no bearer/Cookie forwarding is introduced.
+Server-only shared LLM key is configured/resolved for every app with no app-specific overrides
+and no external LLM calls. OpenAPI, generated frontend types, examples and tests change together.

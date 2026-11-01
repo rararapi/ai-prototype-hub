@@ -19,12 +19,14 @@ preview = os.environ["PROTOHUB_PREVIEW_URL"]
 context = "kind-" + os.environ["PROTOHUB_CLUSTER_NAME"]
 opener = build_opener(ProxyHandler({}))
 checks, registered = [], []
+owner_token = ""
 
 
 def http(path, method="GET", payload=None, headers=None, base=console):
     request_headers = {
         "Content-Type": "application/json",
         "X-ProtoHub-Client": "console",
+        **({"Authorization": f"Bearer {owner_token}"} if base == console and owner_token else {}),
         **(headers or {}),
     }
     data = json.dumps(payload if payload is not None else {}).encode() if method != "GET" else None
@@ -128,6 +130,9 @@ def passed(name):
 
 try:
     assert api("/system")["runtime_mode"] == "real-kind"
+    assert http("/api/v1/sandboxes")[0] == 401
+    owner_token = api("/auth/login", "POST", {"email": "runtime-owner@example.test"})["token"]
+    assert api("/auth/me") == {"email": "runtime-owner@example.test"}
     wait(
         lambda: (
             not json.loads(
@@ -148,6 +153,35 @@ try:
         assert value["preview_url"] == f"{preview}/apps/{sandbox_id}/"
         assert http(f"/apps/{sandbox_id}/healthz", base=preview)[0] == 200
     passed("duplicate start, real readiness and independent URLs")
+
+    if args.gate == "security":
+        reader = api("/auth/login", "POST", {"email": "runtime-reader@example.test"})["token"]
+        outsider = api("/auth/login", "POST", {"email": "runtime-outsider@example.test"})["token"]
+        reader_headers = {"Authorization": f"Bearer {reader}"}
+        outsider_headers = {"Authorization": f"Bearer {outsider}"}
+        assert api(f"/sandboxes/{one}")["owner_email"] == "runtime-owner@example.test"
+        api(f"/sandboxes/{one}/shares", "PUT", {"emails": ["runtime-reader@example.test"]})
+        reader_list = json.loads(http("/api/v1/sandboxes", headers=reader_headers)[1])
+        assert [item["id"] for item in reader_list["items"]] == [one]
+        assert json.loads(http("/api/v1/sandboxes", headers=outsider_headers)[1]) == {"items": []}
+        for path in (f"/sandboxes/{two}", f"/operations/{operations[0]['id']}"):
+            assert http("/api/v1" + path, headers=outsider_headers)[0] == 404
+        assert http(f"/api/v1/operations/{operations[0]['id']}", headers=reader_headers)[0] == 200
+        for method, path, payload in (
+            ("POST", f"/sandboxes/{one}/start", {}),
+            ("POST", f"/sandboxes/{one}/stop", {}),
+            ("DELETE", f"/sandboxes/{one}", {}),
+            ("PUT", f"/sandboxes/{one}/shares", {"emails": []}),
+        ):
+            assert http("/api/v1" + path, method, payload, reader_headers)[0] == 404
+        assert http(f"/api/v1/sandboxes/{one}/shares", headers=reader_headers)[0] == 404
+        api(f"/sandboxes/{one}/shares", "PUT", {"emails": []})
+        assert http(f"/api/v1/sandboxes/{one}", headers=reader_headers)[0] == 404
+        assert http(f"/api/v1/operations/{operations[0]['id']}", headers=reader_headers)[0] == 404
+        assert http("/api/v1/auth/logout", "POST", {}, reader_headers)[0] == 200
+        assert http("/api/v1/sandboxes", headers=reader_headers)[0] == 401
+        assert http("/api/v1/auth/logout", "POST", {}, outsider_headers)[0] == 200
+        passed("live email sessions, owner/recipient visibility, read-only sharing and revocation")
 
     if args.gate == "security":
         for namespace, verb, resource, expected in (

@@ -1,8 +1,9 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ApiError, api } from './api';
-import { operationFixture, sandboxFixture } from './test/fixtures';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ApiError, api, sessionStore, SESSION_KEY, SESSION_EXPIRED_EVENT } from './api';
+import { loginFixture, operationFixture, sandboxFixture } from './test/fixtures';
 
-afterEach(() => { vi.unstubAllGlobals(); });
+beforeEach(() => { sessionStore.set({ ...loginFixture, expires_at: new Date(Date.now() + 86_400_000).toISOString() }); });
+afterEach(() => { sessionStore.clear(); vi.unstubAllGlobals(); });
 
 describe('typed API client', () => {
   it('sends JSON and the custom client header for registration', async () => {
@@ -10,7 +11,7 @@ describe('typed API client', () => {
     vi.stubGlobal('fetch', fetchMock);
     await api.create({ name: 'Example app', template_id: 'hello-web', ttl_seconds: 900 });
     expect(fetchMock).toHaveBeenCalledWith('/api/v1/sandboxes', expect.objectContaining({
-      method: 'POST', credentials: 'same-origin',
+      method: 'POST', credentials: 'omit',
       headers: expect.objectContaining({ 'Content-Type': 'application/json', 'X-ProtoHub-Client': 'console' }),
       body: JSON.stringify({ name: 'Example app', template_id: 'hello-web', ttl_seconds: 900 }),
     }));
@@ -46,5 +47,52 @@ describe('typed API client', () => {
   it('passes cancellation through to the caller', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new DOMException('cancelled', 'AbortError')));
     await expect(api.list()).rejects.toMatchObject({ name: 'AbortError' });
+  });
+});
+
+
+describe('development session boundaries', () => {
+  it('attaches bearer tokens only to protected same-origin API paths and omits cookies', async () => {
+    const fetchMock = vi.fn().mockImplementation(async () => new Response('{}'));
+    vi.stubGlobal('fetch', fetchMock);
+    await api.list();
+    await api.system();
+    await api.login('owner@example.test');
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ credentials: 'omit', headers: { Authorization: `Bearer ${loginFixture.token}` } });
+    for (const call of fetchMock.mock.calls.slice(1)) expect(call[1].headers).not.toHaveProperty('Authorization');
+    expect(fetchMock.mock.calls.every(call => call[0].startsWith('/api/v1/'))).toBe(true);
+  });
+
+  it('rejects corrupt and expired saved sessions', () => {
+    sessionStorage.setItem(SESSION_KEY, '{');
+    expect(sessionStore.get()).toBeNull();
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ ...loginFixture, expires_at: '2000-01-01T00:00:00Z' }));
+    expect(sessionStore.get()).toBeNull();
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ ...loginFixture, token: 1 }));
+    expect(sessionStore.get()).toBeNull();
+  });
+
+  it('notifies only the still-current session when an unauthorized response arrives', async () => {
+    let resolve!: (value: Response) => void;
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(() => new Promise(done => { resolve = done; })));
+    const listener = vi.fn();
+    window.addEventListener(SESSION_EXPIRED_EVENT, listener);
+    try {
+      const pending = api.list();
+      sessionStore.set({ ...loginFixture, token: 'another-session', expires_at: new Date(Date.now() + 86_400_000).toISOString() });
+      resolve(new Response('{}', { status: 401 }));
+      await expect(pending).rejects.toMatchObject({ status: 401 });
+      expect(listener).not.toHaveBeenCalled();
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{}', { status: 401 })));
+      await expect(api.list()).rejects.toMatchObject({ status: 401 });
+      expect(listener).toHaveBeenCalledTimes(1);
+    } finally { window.removeEventListener(SESSION_EXPIRED_EVENT, listener); }
+  });
+
+  it('replaces shares with a JSON PUT and encoded resource ID', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ emails: [] })));
+    vi.stubGlobal('fetch', fetchMock);
+    await api.setShares('test/id', []);
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/sandboxes/test%2Fid/shares', expect.objectContaining({ method: 'PUT', body: '{"emails":[]}', headers: expect.objectContaining({ 'X-ProtoHub-Client': 'console', Authorization: `Bearer ${loginFixture.token}` }) }));
   });
 });
