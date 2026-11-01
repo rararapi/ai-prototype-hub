@@ -184,6 +184,32 @@ try:
         passed("live email sessions, owner/recipient visibility, read-only sharing and revocation")
 
     if args.gate == "security":
+        # The operator executes fixed assertions; no pod RBAC or worker permissions change.
+        # Print neither the key nor the environment, even if an assertion fails.
+        kube(
+            "exec",
+            "deployment/api",
+            "--",
+            "python",
+            "-c",
+            "from uuid import UUID; from protohub.domain.settings import Settings; "
+            "settings = Settings(); "
+            "one = settings.resolve_llm_api_key(UUID(int=1)); "
+            "two = settings.resolve_llm_api_key(UUID(int=2)); "
+            "assert one is not None and one is two; "
+            "assert one.get_secret_value() == 'synthetic-fixture-common-credential'; "
+            "assert settings.environment == 'test'",
+        )
+        for deployment in ("worker", "preview"):
+            kube(
+                "exec",
+                "deployment/" + deployment,
+                "--",
+                "python",
+                "-c",
+                "import os; assert 'PROTOHUB_LLM_API_KEY' not in os.environ",
+            )
+        passed("live common LLM Secret delivery to API only, same key for every app")
         for namespace, verb, resource, expected in (
             ("protohub-samples", "create", "deployments.apps", "yes"),
             ("protohub-samples", "get", "secrets", "no"),

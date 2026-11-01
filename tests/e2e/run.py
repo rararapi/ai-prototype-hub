@@ -27,6 +27,9 @@ except PortSelectionError as exc:
 env = {
     **os.environ,
     "PROTOHUB_MODE": "real-kind",
+    # Never forward an operator's real key or production flag into an ephemeral test.
+    "PROTOHUB_LLM_API_KEY": "synthetic-fixture-common-credential",
+    "PROTOHUB_ENVIRONMENT": "test",
     "PROTOHUB_CLUSTER_NAME": name,
     "PROTOHUB_CONSOLE_PORT": str(console),
     "PROTOHUB_PREVIEW_PORT": str(preview),
