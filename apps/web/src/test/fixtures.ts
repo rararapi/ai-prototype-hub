@@ -12,7 +12,7 @@ export const operationFixture: Operation = {
   created_at: sandboxFixture.created_at, updated_at: sandboxFixture.updated_at, error: null,
 };
 export const mockSystem: SystemInfo = {
-  runtime_mode: 'mock', auth_mode: 'local-dev', constraints: ['Trusted templates only'],
+  runtime_mode: 'mock', auth_mode: 'local-dev', ai_enabled: false, constraints: ['Trusted templates only'],
 };
 
 export const loginFixture = { token: 'synthetic-owner-session', email: 'owner@example.test', expires_at: '2099-11-02T00:00:00Z' };

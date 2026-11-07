@@ -152,3 +152,10 @@ Bearerセッションは24時間有効、DBはハッシュのみ、ブラウザ�
 アプリ別キー設定は将来の拡張とし、現時点で実LLM通信やサンプルへのキー注入は追加しない。
 console/previewのOrigin・Cookie・ヘッダ境界と既存データの扱いは
 [DEVELOPMENT_AUTH.md](DEVELOPMENT_AUTH.md) を正本とする。
+
+## 11. Gemini連携と既存GCPへの配備（2026-11-07の追加依頼）
+
+ユーザーの追加依頼により、実Gemini連携、mainへの統合、既存GCPへの更新を行う。
+v0の固定サンプルの実行境界は維持し、別ドメインの版付き画面案を生成・保存する。
+新規仕様は [GEMINI_CREATION.md](GEMINI_CREATION.md) を正本とする。
+静的Pagesデモは実LLMへ接続しない。生成コードの実行や新しい任意コンテナは追加しない。

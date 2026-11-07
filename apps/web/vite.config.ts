@@ -1,8 +1,12 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  define: mode === 'test' ? {} : { 'import.meta.env.VITE_DEMO_MODE': JSON.stringify(mode === 'demo' ? 'true' : 'false') },
   plugins: [react()],
+  build: mode === 'demo' ? {
+    rolldownOptions: { input: { main: 'index.html', preview: 'demo-preview.html' } },
+  } : {},
   server: {
     host: '127.0.0.1',
     proxy: {
@@ -16,4 +20,4 @@ export default defineConfig({
     clearMocks: true,
     restoreMocks: true,
   },
-});
+}));

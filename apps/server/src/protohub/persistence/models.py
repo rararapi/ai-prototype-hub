@@ -108,10 +108,19 @@ class UserRow(Base):
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
 
 
+class GoogleAccountRow(Base):
+    __tablename__ = "google_accounts"
+
+    email: Mapped[str] = mapped_column(String(254), primary_key=True)
+    subject: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
+    active: Mapped[bool] = mapped_column(default=True)
+
+
 class SessionRow(Base):
     __tablename__ = "sessions"
 
     token_digest: Mapped[str] = mapped_column(String(64), primary_key=True)
+    google_subject: Mapped[str | None] = mapped_column(String(255), nullable=True)
     email: Mapped[str] = mapped_column(ForeignKey("users.email"), index=True)
     expires_at: Mapped[datetime] = mapped_column(UTCDateTime(), index=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
@@ -122,3 +131,50 @@ class SandboxShareRow(Base):
 
     sandbox_id: Mapped[UUID] = mapped_column(ForeignKey("sandboxes.id"), primary_key=True)
     email: Mapped[str] = mapped_column(String(254), primary_key=True, index=True)
+
+
+class AiApplicationRow(Base):
+    __tablename__ = "ai_applications"
+    __table_args__ = (
+        CheckConstraint("status IN ('draft','ready','deleted')", name="ai_application_status"),
+        CheckConstraint("revision >= 1", name="ai_application_revision"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    owner_email: Mapped[str] = mapped_column(ForeignKey("users.email"), index=True)
+    config: Mapped[dict[str, Any]] = mapped_column(JSON)
+    brief: Mapped[dict[str, Any]] = mapped_column(JSON)
+    summary: Mapped[str] = mapped_column(String(1000))
+    model: Mapped[str] = mapped_column(String(128))
+    status: Mapped[str] = mapped_column(String(16), default="draft")
+    revision: Mapped[int] = mapped_column(default=1)
+    usage: Mapped[dict[str, int] | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
+
+
+class AiGenerationRow(Base):
+    __tablename__ = "ai_generations"
+    __table_args__ = (
+        CheckConstraint("status IN ('running','succeeded','failed')", name="ai_generation_status"),
+        Index("ai_generation_quota", "owner_email", "created_at"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
+    owner_email: Mapped[str] = mapped_column(ForeignKey("users.email"))
+    payload_hash: Mapped[str] = mapped_column(String(64))
+    application_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("ai_applications.id"), nullable=True
+    )
+    status: Mapped[str] = mapped_column(String(16), default="running")
+    token: Mapped[UUID] = mapped_column(Uuid, default=uuid4)
+    expires_at: Mapped[datetime] = mapped_column(UTCDateTime())
+    result: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    error_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
+
+
+class AiQuotaRow(Base):
+    __tablename__ = "ai_quotas"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)

@@ -7,27 +7,43 @@ from uuid import UUID
 
 import httpx
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 
 from protohub.domain.models import DesiredState, SandboxStatus
 from protohub.domain.ports import RuntimeSpec
 from protohub.domain.settings import Settings
+from protohub.persistence.auth import AuthenticationRequired, SessionRepository
+from protohub.persistence.database import create_session_factory
+from protohub.persistence.repository import NotFound, SandboxRepository
 from protohub.runtime.kubernetes import sample_url
 
 MAX_RESPONSE = 1024 * 1024
 
 
 def create_app(
-    settings: Settings | None = None, repository: Any = None, http: httpx.Client | None = None
+    settings: Settings | None = None,
+    repository: Any = None,
+    http: httpx.Client | None = None,
+    sessions: SessionRepository | None = None,
 ) -> FastAPI:
     settings = settings or Settings()
-    if repository is None:
-        from protohub.persistence.database import create_session_factory
-        from protohub.persistence.repository import SandboxRepository
-
-        repository = SandboxRepository(create_session_factory(settings.database_url), settings)
+    if repository is None or (settings.google_login and sessions is None):
+        factory = create_session_factory(settings.database_url)
+        if repository is None:
+            repository = SandboxRepository(factory, settings)
+        if settings.google_login and sessions is None:
+            sessions = SessionRepository(factory)
     upstream = http or httpx.Client(timeout=5, follow_redirects=False, trust_env=False)
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+
+    if settings.google_login:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=[settings.console_origin],
+            allow_methods=["GET", "HEAD"],
+            allow_headers=["Authorization"],
+        )
 
     @app.middleware("http")
     async def boundary(request: Request, call_next: Any) -> Response:
@@ -48,9 +64,18 @@ def create_app(
             allowed = False
         if not allowed or "@" in host or "\\" in host:
             return JSONResponse({"error": "preview_host_rejected"}, status_code=403)
-        if request.method not in {"GET", "HEAD"}:
+        if settings.google_login and request.headers.get("origin") not in {
+            None,
+            settings.console_origin,
+        }:
+            return JSONResponse({"error": "preview_origin_rejected"}, status_code=403)
+        if request.method not in {"GET", "HEAD"} and not (
+            settings.google_login and request.method == "OPTIONS"
+        ):
             return JSONResponse({"error": "preview_method_rejected"}, status_code=405)
-        return await call_next(request)
+        response = await call_next(request)
+        response.headers["Cache-Control"] = "no-store"
+        return response
 
     @app.api_route("/healthz", methods=["GET", "HEAD"])
     def health() -> Response:
@@ -72,9 +97,21 @@ def create_app(
         if settings.runtime_mode != "real-kind":
             return JSONResponse({"error": "mock_has_no_preview"}, status_code=404)
         try:
-            sandbox = repository.get(sandbox_id)
-        except Exception:
+            if settings.google_login:
+                if sessions is None:
+                    return JSONResponse({"error": "preview_auth_unavailable"}, status_code=503)
+                principal = sessions.authenticate(request.headers.get("authorization"), google=True)
+                sandbox = repository.get(sandbox_id, principal.email)
+            elif settings.environment == "production":
+                return JSONResponse({"error": "preview_auth_disabled"}, status_code=403)
+            else:
+                sandbox = repository.get(sandbox_id)
+        except AuthenticationRequired:
+            return JSONResponse({"error": "preview_auth_required"}, status_code=401)
+        except NotFound:
             return JSONResponse({"error": "preview_not_available"}, status_code=404)
+        except Exception:
+            return JSONResponse({"error": "preview_unavailable"}, status_code=503)
         if (
             sandbox.desired_state != DesiredState.RUNNING
             or sandbox.status != SandboxStatus.RUNNING
@@ -84,7 +121,10 @@ def create_app(
         url = sample_url(settings, RuntimeSpec(sandbox.id, sandbox.generation), "/" + path)
         try:
             # Rebuild request headers, never copy Cookie/Authorization/Host/X-Forwarded-*.
-            with upstream.stream(request.method, url, headers={"Accept": "*/*"}) as result:
+            # An explicit Request also bypasses the client's cookie jar on later requests.
+            outgoing = httpx.Request(request.method, url, headers={"Accept": "*/*"})
+            result = upstream.send(outgoing, stream=True, follow_redirects=False)
+            try:
                 if 300 <= result.status_code < 400:
                     return JSONResponse({"error": "preview_redirect_rejected"}, status_code=502)
                 body = bytearray()
@@ -104,6 +144,8 @@ def create_app(
                         "Referrer-Policy": "no-referrer",
                     },
                 )
+            finally:
+                result.close()
         except httpx.HTTPError:
             return JSONResponse({"error": "preview_upstream_unavailable"}, status_code=502)
 

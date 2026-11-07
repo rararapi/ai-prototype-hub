@@ -3,7 +3,7 @@ from enum import StrEnum
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class DesiredState(StrEnum):
@@ -103,8 +103,12 @@ class TemplateList(DTO):
 
 class SystemInfo(DTO):
     runtime_mode: Literal["mock", "real-kind"]
-    auth_mode: Literal["local-dev", "disabled"] = "local-dev"
+    auth_mode: Literal["local-dev", "google", "disabled"] = "local-dev"
+    google_client_id: str | None = None
+    preview_origin: str | None = None
     constraints: list[str]
+    ai_enabled: bool = False
+    ai_model: str | None = None
 
 
 class Health(DTO):
@@ -129,6 +133,10 @@ class LoginRequest(DTO):
         return value
 
 
+class GoogleLoginRequest(DTO):
+    code: str = Field(min_length=1, max_length=4096, pattern=r"^[!-~]+$")
+
+
 class Principal(DTO):
     email: str
 
@@ -150,3 +158,70 @@ class ShareList(DTO):
     @classmethod
     def normalize_emails(cls, values: list[str]) -> list[str]:
         return sorted({LoginRequest(email=value).email for value in values})
+
+
+class AiBrief(DTO):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    purpose: str = Field(min_length=1, max_length=300)
+    audience: str = Field(min_length=1, max_length=300)
+    success: str = Field(min_length=1, max_length=300)
+
+
+class AiConfig(DTO):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    template: Literal["hello-web", "management-dashboard"]
+    title: str = Field(min_length=1, max_length=64)
+    subtitle: str = Field(max_length=160)
+    color: Literal["purple", "blue", "green"]
+    trend: bool = Field(strict=True)
+    departments: bool = Field(strict=True)
+    cash_flow: bool = Field(strict=True)
+
+    @model_validator(mode="after")
+    def applicable_features(self) -> "AiConfig":
+        if self.template == "hello-web" and (self.trend or self.departments or self.cash_flow):
+            raise ValueError("Dashboard options require the management dashboard")
+        return self
+
+
+class AiUsage(DTO):
+    input_tokens: int = Field(ge=0, strict=True)
+    output_tokens: int = Field(ge=0, strict=True)
+
+
+class AiApplication(DTO):
+    id: UUID
+    brief: AiBrief
+    config: AiConfig
+    summary: str = Field(max_length=1000)
+    model: str
+    status: Literal["draft", "ready"]
+    revision: int = Field(ge=1)
+    usage: AiUsage | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class AiApplicationList(DTO):
+    items: list[AiApplication]
+
+
+class AiCreateRequest(DTO):
+    request_id: UUID
+    brief: AiBrief
+    config: AiConfig
+    instruction: str = Field(default="", max_length=1000)
+
+
+class AiReviseRequest(DTO):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    request_id: UUID
+    expected_revision: int = Field(ge=1, strict=True)
+    instruction: str = Field(min_length=1, max_length=1000)
+
+
+class AiConfirmRequest(DTO):
+    expected_revision: int = Field(ge=1, strict=True)

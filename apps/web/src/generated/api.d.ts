@@ -210,6 +210,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/google": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Google Login */
+        post: operations["google_login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/sandboxes/{sandbox_id}/shares": {
         parameters: {
             query?: never;
@@ -228,6 +245,76 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/ai/apps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ai List */
+        get: operations["ai_list"];
+        put?: never;
+        /** Ai Create */
+        post: operations["ai_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/apps/{application_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ai Get */
+        get: operations["ai_get"];
+        put?: never;
+        post?: never;
+        /** Ai Delete */
+        delete: operations["ai_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/apps/{application_id}/revise": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ai Revise */
+        post: operations["ai_revise"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/apps/{application_id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ai Confirm */
+        post: operations["ai_confirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -237,6 +324,114 @@ export interface components {
          * @enum {string}
          */
         Action: "start" | "stop" | "delete";
+        /** AiApplication */
+        AiApplication: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            brief: components["schemas"]["AiBrief"];
+            config: components["schemas"]["AiConfig"];
+            /** Summary */
+            summary: string;
+            /** Model */
+            model: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "ready";
+            /** Revision */
+            revision: number;
+            usage: components["schemas"]["AiUsage"] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** AiApplicationList */
+        AiApplicationList: {
+            /** Items */
+            items: components["schemas"]["AiApplication"][];
+        };
+        /** AiBrief */
+        AiBrief: {
+            /** Purpose */
+            purpose: string;
+            /** Audience */
+            audience: string;
+            /** Success */
+            success: string;
+        };
+        /** AiConfig */
+        AiConfig: {
+            /**
+             * Template
+             * @enum {string}
+             */
+            template: "hello-web" | "management-dashboard";
+            /** Title */
+            title: string;
+            /** Subtitle */
+            subtitle: string;
+            /**
+             * Color
+             * @enum {string}
+             */
+            color: "purple" | "blue" | "green";
+            /** Trend */
+            trend: boolean;
+            /** Departments */
+            departments: boolean;
+            /** Cash Flow */
+            cash_flow: boolean;
+        };
+        /** AiConfirmRequest */
+        AiConfirmRequest: {
+            /** Expected Revision */
+            expected_revision: number;
+        };
+        /** AiCreateRequest */
+        AiCreateRequest: {
+            /**
+             * Request Id
+             * Format: uuid
+             */
+            request_id: string;
+            brief: components["schemas"]["AiBrief"];
+            config: components["schemas"]["AiConfig"];
+            /**
+             * Instruction
+             * @default
+             */
+            instruction: string;
+        };
+        /** AiReviseRequest */
+        AiReviseRequest: {
+            /**
+             * Request Id
+             * Format: uuid
+             */
+            request_id: string;
+            /** Expected Revision */
+            expected_revision: number;
+            /** Instruction */
+            instruction: string;
+        };
+        /** AiUsage */
+        AiUsage: {
+            /** Input Tokens */
+            input_tokens: number;
+            /** Output Tokens */
+            output_tokens: number;
+        };
         /** CreateSandbox */
         CreateSandbox: {
             /** Name */
@@ -263,6 +458,11 @@ export interface components {
             code: string;
             /** Message */
             message: string;
+        };
+        /** GoogleLoginRequest */
+        GoogleLoginRequest: {
+            /** Code */
+            code: string;
         };
         /** Health */
         Health: {
@@ -420,9 +620,20 @@ export interface components {
              * @default local-dev
              * @enum {string}
              */
-            auth_mode: "local-dev" | "disabled";
+            auth_mode: "local-dev" | "google" | "disabled";
+            /** Google Client Id */
+            google_client_id?: string | null;
+            /** Preview Origin */
+            preview_origin?: string | null;
             /** Constraints */
             constraints: string[];
+            /**
+             * Ai Enabled
+             * @default false
+             */
+            ai_enabled: boolean;
+            /** Ai Model */
+            ai_model?: string | null;
         };
         /** Template */
         Template: {
@@ -500,7 +711,7 @@ export interface operations {
                     "application/json": components["schemas"]["HttpError"];
                 };
             };
-            /** @description Development login required */
+            /** @description Authentication required */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -510,7 +721,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "http_401",
-                     *         "message": "Development login required",
+                     *         "message": "Authentication required",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -583,6 +794,24 @@ export interface operations {
                      *       "error": {
                      *         "code": "validation_error",
                      *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Generation quota exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_429",
+                     *         "message": "Generation quota exceeded",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -672,7 +901,7 @@ export interface operations {
                     "application/json": components["schemas"]["HttpError"];
                 };
             };
-            /** @description Development login required */
+            /** @description Authentication required */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -682,7 +911,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "http_401",
-                     *         "message": "Development login required",
+                     *         "message": "Authentication required",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -755,6 +984,24 @@ export interface operations {
                      *       "error": {
                      *         "code": "validation_error",
                      *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Generation quota exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_429",
+                     *         "message": "Generation quota exceeded",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -841,7 +1088,7 @@ export interface operations {
                     "application/json": components["schemas"]["HttpError"];
                 };
             };
-            /** @description Development login required */
+            /** @description Authentication required */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -851,7 +1098,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "http_401",
-                     *         "message": "Development login required",
+                     *         "message": "Authentication required",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -924,6 +1171,24 @@ export interface operations {
                      *       "error": {
                      *         "code": "validation_error",
                      *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Generation quota exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_429",
+                     *         "message": "Generation quota exceeded",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -1010,7 +1275,7 @@ export interface operations {
                     "application/json": components["schemas"]["HttpError"];
                 };
             };
-            /** @description Development login required */
+            /** @description Authentication required */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -1020,7 +1285,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "http_401",
-                     *         "message": "Development login required",
+                     *         "message": "Authentication required",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -1093,6 +1358,24 @@ export interface operations {
                      *       "error": {
                      *         "code": "validation_error",
                      *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Generation quota exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_429",
+                     *         "message": "Generation quota exceeded",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -1184,7 +1467,7 @@ export interface operations {
                     "application/json": components["schemas"]["HttpError"];
                 };
             };
-            /** @description Development login required */
+            /** @description Authentication required */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -1194,7 +1477,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "http_401",
-                     *         "message": "Development login required",
+                     *         "message": "Authentication required",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -1267,6 +1550,24 @@ export interface operations {
                      *       "error": {
                      *         "code": "validation_error",
                      *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Generation quota exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_429",
+                     *         "message": "Generation quota exceeded",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -1359,7 +1660,7 @@ export interface operations {
                     "application/json": components["schemas"]["HttpError"];
                 };
             };
-            /** @description Development login required */
+            /** @description Authentication required */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -1369,7 +1670,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "http_401",
-                     *         "message": "Development login required",
+                     *         "message": "Authentication required",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -1442,6 +1743,24 @@ export interface operations {
                      *       "error": {
                      *         "code": "validation_error",
                      *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Generation quota exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_429",
+                     *         "message": "Generation quota exceeded",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -1542,7 +1861,7 @@ export interface operations {
                     "application/json": components["schemas"]["HttpError"];
                 };
             };
-            /** @description Development login required */
+            /** @description Authentication required */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -1552,7 +1871,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "http_401",
-                     *         "message": "Development login required",
+                     *         "message": "Authentication required",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -1625,6 +1944,24 @@ export interface operations {
                      *       "error": {
                      *         "code": "validation_error",
                      *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Generation quota exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_429",
+                     *         "message": "Generation quota exceeded",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -1726,7 +2063,7 @@ export interface operations {
                     "application/json": components["schemas"]["HttpError"];
                 };
             };
-            /** @description Development login required */
+            /** @description Authentication required */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -1736,7 +2073,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "http_401",
-                     *         "message": "Development login required",
+                     *         "message": "Authentication required",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -1809,6 +2146,24 @@ export interface operations {
                      *       "error": {
                      *         "code": "validation_error",
                      *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Generation quota exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_429",
+                     *         "message": "Generation quota exceeded",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -1907,7 +2262,7 @@ export interface operations {
                     "application/json": components["schemas"]["HttpError"];
                 };
             };
-            /** @description Development login required */
+            /** @description Authentication required */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -1917,7 +2272,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "http_401",
-                     *         "message": "Development login required",
+                     *         "message": "Authentication required",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -1990,6 +2345,24 @@ export interface operations {
                      *       "error": {
                      *         "code": "validation_error",
                      *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Generation quota exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_429",
+                     *         "message": "Generation quota exceeded",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -2088,7 +2461,7 @@ export interface operations {
                     "application/json": components["schemas"]["HttpError"];
                 };
             };
-            /** @description Development login required */
+            /** @description Authentication required */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -2098,7 +2471,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "http_401",
-                     *         "message": "Development login required",
+                     *         "message": "Authentication required",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -2171,6 +2544,24 @@ export interface operations {
                      *       "error": {
                      *         "code": "validation_error",
                      *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Generation quota exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_429",
+                     *         "message": "Generation quota exceeded",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -2269,7 +2660,7 @@ export interface operations {
                     "application/json": components["schemas"]["HttpError"];
                 };
             };
-            /** @description Development login required */
+            /** @description Authentication required */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -2279,7 +2670,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "http_401",
-                     *         "message": "Development login required",
+                     *         "message": "Authentication required",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -2352,6 +2743,24 @@ export interface operations {
                      *       "error": {
                      *         "code": "validation_error",
                      *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Generation quota exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_429",
+                     *         "message": "Generation quota exceeded",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -2450,7 +2859,7 @@ export interface operations {
                     "application/json": components["schemas"]["HttpError"];
                 };
             };
-            /** @description Development login required */
+            /** @description Authentication required */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -2460,7 +2869,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "http_401",
-                     *         "message": "Development login required",
+                     *         "message": "Authentication required",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -2533,6 +2942,24 @@ export interface operations {
                      *       "error": {
                      *         "code": "validation_error",
                      *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Generation quota exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_429",
+                     *         "message": "Generation quota exceeded",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -2630,7 +3057,7 @@ export interface operations {
                     "application/json": components["schemas"]["HttpError"];
                 };
             };
-            /** @description Development login required */
+            /** @description Authentication required */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -2640,7 +3067,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "http_401",
-                     *         "message": "Development login required",
+                     *         "message": "Authentication required",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -2713,6 +3140,24 @@ export interface operations {
                      *       "error": {
                      *         "code": "validation_error",
                      *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Generation quota exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_429",
+                     *         "message": "Generation quota exceeded",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -2807,7 +3252,7 @@ export interface operations {
                     "application/json": components["schemas"]["HttpError"];
                 };
             };
-            /** @description Development login required */
+            /** @description Authentication required */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -2817,7 +3262,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "http_401",
-                     *         "message": "Development login required",
+                     *         "message": "Authentication required",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -2890,6 +3335,221 @@ export interface operations {
                      *       "error": {
                      *         "code": "validation_error",
                      *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Generation quota exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_429",
+                     *         "message": "Generation quota exceeded",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Internal error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_500",
+                     *         "message": "Internal error",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Dependency unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_503",
+                     *         "message": "Dependency unavailable",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+        };
+    };
+    google_login: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-ProtoHub-Client": "console";
+                "X-Requested-With": "XmlHttpRequest";
+                Origin: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoogleLoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "token": "synthetic-session-token",
+                     *       "email": "owner@example.test",
+                     *       "expires_at": "2026-11-02T00:00:00Z"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["LoginSession"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_400",
+                     *         "message": "Invalid request",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_401",
+                     *         "message": "Authentication required",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Local origin, host or client header rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_403",
+                     *         "message": "Local origin, host or client header rejected",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_404",
+                     *         "message": "Resource not found",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description State conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_409",
+                     *         "message": "State conflict",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "validation_error",
+                     *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Generation quota exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_429",
+                     *         "message": "Generation quota exceeded",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -2982,7 +3642,7 @@ export interface operations {
                     "application/json": components["schemas"]["HttpError"];
                 };
             };
-            /** @description Development login required */
+            /** @description Authentication required */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -2992,7 +3652,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "http_401",
-                     *         "message": "Development login required",
+                     *         "message": "Authentication required",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -3065,6 +3725,24 @@ export interface operations {
                      *       "error": {
                      *         "code": "validation_error",
                      *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Generation quota exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_429",
+                     *         "message": "Generation quota exceeded",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -3162,7 +3840,7 @@ export interface operations {
                     "application/json": components["schemas"]["HttpError"];
                 };
             };
-            /** @description Development login required */
+            /** @description Authentication required */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -3172,7 +3850,7 @@ export interface operations {
                      * @example {
                      *       "error": {
                      *         "code": "http_401",
-                     *         "message": "Development login required",
+                     *         "message": "Authentication required",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }
@@ -3245,6 +3923,1306 @@ export interface operations {
                      *       "error": {
                      *         "code": "validation_error",
                      *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Generation quota exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_429",
+                     *         "message": "Generation quota exceeded",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Internal error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_500",
+                     *         "message": "Internal error",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Dependency unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_503",
+                     *         "message": "Dependency unavailable",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+        };
+    };
+    ai_list: {
+        parameters: {
+            query?: never;
+            header: {
+                Authorization: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "items": [
+                     *         {
+                     *           "id": "00000000-0000-4000-8000-000000000003",
+                     *           "brief": {
+                     *             "purpose": "月次会議で予実を確認する",
+                     *             "audience": "会議の参加者",
+                     *             "success": "部門ごとの差が分かるか確認する"
+                     *           },
+                     *           "config": {
+                     *             "template": "management-dashboard",
+                     *             "title": "月次レポート",
+                     *             "subtitle": "サンプルの予実を確認",
+                     *             "color": "blue",
+                     *             "trend": true,
+                     *             "departments": true,
+                     *             "cash_flow": false
+                     *           },
+                     *           "summary": "予実と部門別の違いを確認する画面案です。",
+                     *           "model": "gemini-3.5-flash-lite",
+                     *           "status": "draft",
+                     *           "revision": 1,
+                     *           "usage": {
+                     *             "input_tokens": 100,
+                     *             "output_tokens": 120
+                     *           },
+                     *           "created_at": "2026-11-07T00:00:00Z",
+                     *           "updated_at": "2026-11-07T00:00:00Z"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["AiApplicationList"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_400",
+                     *         "message": "Invalid request",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_401",
+                     *         "message": "Authentication required",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Local origin, host or client header rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_403",
+                     *         "message": "Local origin, host or client header rejected",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_404",
+                     *         "message": "Resource not found",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description State conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_409",
+                     *         "message": "State conflict",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "validation_error",
+                     *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Generation quota exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_429",
+                     *         "message": "Generation quota exceeded",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Internal error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_500",
+                     *         "message": "Internal error",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Dependency unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_503",
+                     *         "message": "Dependency unavailable",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+        };
+    };
+    ai_create: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-ProtoHub-Client": "console";
+                Authorization: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AiCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "00000000-0000-4000-8000-000000000003",
+                     *       "brief": {
+                     *         "purpose": "月次会議で予実を確認する",
+                     *         "audience": "会議の参加者",
+                     *         "success": "部門ごとの差が分かるか確認する"
+                     *       },
+                     *       "config": {
+                     *         "template": "management-dashboard",
+                     *         "title": "月次レポート",
+                     *         "subtitle": "サンプルの予実を確認",
+                     *         "color": "blue",
+                     *         "trend": true,
+                     *         "departments": true,
+                     *         "cash_flow": false
+                     *       },
+                     *       "summary": "予実と部門別の違いを確認する画面案です。",
+                     *       "model": "gemini-3.5-flash-lite",
+                     *       "status": "draft",
+                     *       "revision": 1,
+                     *       "usage": {
+                     *         "input_tokens": 100,
+                     *         "output_tokens": 120
+                     *       },
+                     *       "created_at": "2026-11-07T00:00:00Z",
+                     *       "updated_at": "2026-11-07T00:00:00Z"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["AiApplication"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_400",
+                     *         "message": "Invalid request",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_401",
+                     *         "message": "Authentication required",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Local origin, host or client header rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_403",
+                     *         "message": "Local origin, host or client header rejected",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_404",
+                     *         "message": "Resource not found",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description State conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_409",
+                     *         "message": "State conflict",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "validation_error",
+                     *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Generation quota exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_429",
+                     *         "message": "Generation quota exceeded",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Internal error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_500",
+                     *         "message": "Internal error",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Dependency unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_503",
+                     *         "message": "Dependency unavailable",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+        };
+    };
+    ai_get: {
+        parameters: {
+            query?: never;
+            header: {
+                Authorization: string;
+            };
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "00000000-0000-4000-8000-000000000003",
+                     *       "brief": {
+                     *         "purpose": "月次会議で予実を確認する",
+                     *         "audience": "会議の参加者",
+                     *         "success": "部門ごとの差が分かるか確認する"
+                     *       },
+                     *       "config": {
+                     *         "template": "management-dashboard",
+                     *         "title": "月次レポート",
+                     *         "subtitle": "サンプルの予実を確認",
+                     *         "color": "blue",
+                     *         "trend": true,
+                     *         "departments": true,
+                     *         "cash_flow": false
+                     *       },
+                     *       "summary": "予実と部門別の違いを確認する画面案です。",
+                     *       "model": "gemini-3.5-flash-lite",
+                     *       "status": "draft",
+                     *       "revision": 1,
+                     *       "usage": {
+                     *         "input_tokens": 100,
+                     *         "output_tokens": 120
+                     *       },
+                     *       "created_at": "2026-11-07T00:00:00Z",
+                     *       "updated_at": "2026-11-07T00:00:00Z"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["AiApplication"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_400",
+                     *         "message": "Invalid request",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_401",
+                     *         "message": "Authentication required",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Local origin, host or client header rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_403",
+                     *         "message": "Local origin, host or client header rejected",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_404",
+                     *         "message": "Resource not found",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description State conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_409",
+                     *         "message": "State conflict",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "validation_error",
+                     *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Generation quota exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_429",
+                     *         "message": "Generation quota exceeded",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Internal error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_500",
+                     *         "message": "Internal error",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Dependency unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_503",
+                     *         "message": "Dependency unavailable",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+        };
+    };
+    ai_delete: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-ProtoHub-Client": "console";
+                Authorization: string;
+            };
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "status": "ok"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["LogoutResult"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_400",
+                     *         "message": "Invalid request",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_401",
+                     *         "message": "Authentication required",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Local origin, host or client header rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_403",
+                     *         "message": "Local origin, host or client header rejected",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_404",
+                     *         "message": "Resource not found",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description State conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_409",
+                     *         "message": "State conflict",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "validation_error",
+                     *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Generation quota exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_429",
+                     *         "message": "Generation quota exceeded",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Internal error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_500",
+                     *         "message": "Internal error",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Dependency unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_503",
+                     *         "message": "Dependency unavailable",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+        };
+    };
+    ai_revise: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-ProtoHub-Client": "console";
+                Authorization: string;
+            };
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AiReviseRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "00000000-0000-4000-8000-000000000003",
+                     *       "brief": {
+                     *         "purpose": "月次会議で予実を確認する",
+                     *         "audience": "会議の参加者",
+                     *         "success": "部門ごとの差が分かるか確認する"
+                     *       },
+                     *       "config": {
+                     *         "template": "management-dashboard",
+                     *         "title": "月次レポート",
+                     *         "subtitle": "サンプルの予実を確認",
+                     *         "color": "blue",
+                     *         "trend": true,
+                     *         "departments": true,
+                     *         "cash_flow": false
+                     *       },
+                     *       "summary": "予実と部門別の違いを確認する画面案です。",
+                     *       "model": "gemini-3.5-flash-lite",
+                     *       "status": "draft",
+                     *       "revision": 2,
+                     *       "usage": {
+                     *         "input_tokens": 100,
+                     *         "output_tokens": 120
+                     *       },
+                     *       "created_at": "2026-11-07T00:00:00Z",
+                     *       "updated_at": "2026-11-07T00:00:00Z"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["AiApplication"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_400",
+                     *         "message": "Invalid request",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_401",
+                     *         "message": "Authentication required",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Local origin, host or client header rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_403",
+                     *         "message": "Local origin, host or client header rejected",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_404",
+                     *         "message": "Resource not found",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description State conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_409",
+                     *         "message": "State conflict",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "validation_error",
+                     *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Generation quota exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_429",
+                     *         "message": "Generation quota exceeded",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Internal error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_500",
+                     *         "message": "Internal error",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Dependency unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_503",
+                     *         "message": "Dependency unavailable",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+        };
+    };
+    ai_confirm: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-ProtoHub-Client": "console";
+                Authorization: string;
+            };
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AiConfirmRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "00000000-0000-4000-8000-000000000003",
+                     *       "brief": {
+                     *         "purpose": "月次会議で予実を確認する",
+                     *         "audience": "会議の参加者",
+                     *         "success": "部門ごとの差が分かるか確認する"
+                     *       },
+                     *       "config": {
+                     *         "template": "management-dashboard",
+                     *         "title": "月次レポート",
+                     *         "subtitle": "サンプルの予実を確認",
+                     *         "color": "blue",
+                     *         "trend": true,
+                     *         "departments": true,
+                     *         "cash_flow": false
+                     *       },
+                     *       "summary": "予実と部門別の違いを確認する画面案です。",
+                     *       "model": "gemini-3.5-flash-lite",
+                     *       "status": "ready",
+                     *       "revision": 1,
+                     *       "usage": {
+                     *         "input_tokens": 100,
+                     *         "output_tokens": 120
+                     *       },
+                     *       "created_at": "2026-11-07T00:00:00Z",
+                     *       "updated_at": "2026-11-07T00:00:00Z"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["AiApplication"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_400",
+                     *         "message": "Invalid request",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_401",
+                     *         "message": "Authentication required",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Local origin, host or client header rejected */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_403",
+                     *         "message": "Local origin, host or client header rejected",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Resource not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_404",
+                     *         "message": "Resource not found",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description State conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_409",
+                     *         "message": "State conflict",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "validation_error",
+                     *         "message": "Validation failed",
+                     *         "request_id": "00000000-0000-4000-8000-000000000001"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["HttpError"];
+                };
+            };
+            /** @description Generation quota exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": {
+                     *         "code": "http_429",
+                     *         "message": "Generation quota exceeded",
                      *         "request_id": "00000000-0000-4000-8000-000000000001"
                      *       }
                      *     }

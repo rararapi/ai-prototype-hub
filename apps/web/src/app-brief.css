@@ -1,0 +1,34 @@
+.brief-steps { display:flex; gap:8px; margin:0 0 20px; padding:0; list-style:none; }
+.brief-steps li { display:flex; gap:5px; align-items:center; color:#626777; font-size:11px; flex:1; }
+.brief-steps li span { display:grid; place-items:center; border:1px solid #dcd8e4; width:22px; height:22px; border-radius:50%; flex-shrink:0; }
+.brief-steps li[aria-current="step"] { color:#5b439a; font-weight:650; }
+.brief-steps li[aria-current="step"] span { background:#6750b6; color:#fff; border-color:#6750b6; }
+.brief-step-heading { margin:0 0 12px; font-size:17px; text-wrap:balance; }
+.app-brief-form textarea { width:100%; resize:vertical; font:inherit; font-size:12px; color:#302c41; border:1px solid #dcd8e4; border-radius:6px; padding:10px; }
+.brief-field { margin:14px 0; }
+.brief-error { color:#a3293e; font-size:12px; margin:5px 0 10px; }
+.app-brief-form [aria-invalid="true"] { border-color:#a3293e; }
+.brief-options { border:0; padding:0; margin:18px 0; min-width:0; }
+.brief-options legend { font-size:12px; font-weight:650; margin-bottom:8px; }
+.app-brief-form .brief-options label { display:flex; gap:8px; align-items:center; padding:7px 0; margin:0; font-weight:400; font-size:12px; cursor:pointer; }
+.app-brief-form .brief-options input { width:17px; height:17px; padding:0; margin:0; accent-color:#6750b6; flex-shrink:0; }
+.brief-colors { display:flex; gap:24px; flex-wrap:wrap; }
+.brief-actions { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:10px; margin-top:20px; }
+.app-brief-summary { font-size:12px; color:#302c41; overflow-wrap:anywhere; }
+.brief-facts { margin:0 0 20px; }
+.brief-facts div { border-bottom:1px solid #e6e1ef; padding:11px 0; }
+.brief-facts dt { font-size:11px; color:#626777; margin-bottom:5px; }
+.brief-facts dd { margin:0; white-space:pre-wrap; }
+.app-brief-summary h4 { font-size:12px; margin:16px 0 8px; }
+.app-brief-summary ul { padding-left:20px; margin:8px 0 12px; line-height:1.8; }
+.brief-boundaries { border-top:1px solid #e6e1ef; margin-top:16px; padding-top:12px; }
+.brief-boundaries summary,.brief-original summary { cursor:pointer; font-size:12px; font-weight:650; color:#5b439a; }
+.brief-boundaries p { font-size:11px; line-height:1.7; color:#626777; }
+.brief-original { border:1px solid #e6e1ef; border-radius:8px; padding:14px; margin:0 0 18px; background:#faf9fd; }
+.app-brief-form :focus-visible,.brief-boundaries summary:focus-visible,.brief-original summary:focus-visible { outline:2px solid #6750b6; outline-offset:3px; }
+@media(max-width:480px) {
+  .brief-steps { gap:6px; }
+  .brief-steps li { font-size:10px; align-items:flex-start; }
+  .brief-actions { flex-direction:column-reverse; }
+  .brief-actions .button { width:100%; }
+}

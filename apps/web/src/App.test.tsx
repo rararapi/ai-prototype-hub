@@ -222,7 +222,7 @@ describe('development login and app sharing', () => {
     sessionStore.clear();
     const user = userEvent.setup();
     render(<App />);
-    expect(screen.getByRole('heading', { name: '開発用ログイン' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '開発用ログイン' })).toBeInTheDocument();
     expect(api.list).not.toHaveBeenCalled();
     await user.type(screen.getByLabelText('メールアドレス'), 'owner@example.test');
     await user.click(screen.getByRole('button', { name: '開発用ログイン' }));
@@ -355,4 +355,17 @@ describe('development login and app sharing', () => {
     expect(screen.queryByText('Example app')).not.toBeInTheDocument();
     expect(screen.getByRole('alert')).toHaveTextContent('再度ログインしてください');
   });
+});
+
+it('shows the real Gemini entry only when the server capability is enabled', async () => {
+  vi.mocked(api.system).mockResolvedValue({ ...mockSystem, ai_enabled: true, ai_model: 'gemini-3.5-flash-lite' });
+  render(<App />);
+  expect(await screen.findByRole('button', { name: 'Geminiでアプリを作る' })).toBeEnabled();
+  expect(screen.queryByRole('dialog', { name: 'Geminiでアプリを作成' })).not.toBeInTheDocument();
+});
+
+it('does not offer real generation when the server has not configured Gemini', async () => {
+  render(<App />);
+  await screen.findByText('まだアプリがありません');
+  expect(screen.queryByRole('button', { name: 'Geminiでアプリを作る' })).not.toBeInTheDocument();
 });

@@ -26,12 +26,19 @@ describe('typed API client', () => {
       headers: expect.objectContaining({ 'X-ProtoHub-Client': 'console' }),
     }));
   });
+  it('rejects the demo-only template before any normal API request', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(api.create({ name: 'Demo only', template_id: 'management-dashboard', ttl_seconds: 900 })).rejects.toMatchObject({ status: 422 });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('retains safe API error message and request ID', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: {
       code: 'state_conflict', message: 'Deleted application cannot be started', request_id: 'request-example',
     } }), { status: 409 })));
     await expect(api.action(sandboxFixture.id, 'start')).rejects.toMatchObject({
-      message: 'Deleted application cannot be started', status: 409, requestId: 'request-example',
+      message: 'Deleted application cannot be started', status: 409, requestId: 'request-example', code: 'state_conflict',
     });
   });
   it('handles non-JSON errors and network failure without leaking raw diagnostics', async () => {
@@ -95,4 +102,16 @@ describe('development session boundaries', () => {
     await api.setShares('test/id', []);
     expect(fetchMock).toHaveBeenCalledWith('/api/v1/sandboxes/test%2Fid/shares', expect.objectContaining({ method: 'PUT', body: '{"emails":[]}', headers: expect.objectContaining({ 'X-ProtoHub-Client': 'console', Authorization: `Bearer ${loginFixture.token}` }) }));
   });
+});
+
+it.each(['dependency_unavailable', 'ai_generation_failed'])('preserves the safe %s code to distinguish ambiguous and terminal generation failures', async code => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: {
+    code, message: 'Generation unavailable', request_id: 'synthetic-request',
+  } }), { status: 503 })));
+  await expect(api.list()).rejects.toMatchObject({ status: 503, code, requestId: 'synthetic-request' });
+});
+
+it.each([200, 201])('identifies a truncated successful HTTP%s body without losing ambiguous-result status', async status => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{', { status })));
+  await expect(api.list()).rejects.toMatchObject({ status, code: 'invalid_response' });
 });

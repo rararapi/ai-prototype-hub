@@ -41,13 +41,13 @@
             }
           },
           "401": {
-            "description": "Development login required",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "example": {
                   "error": {
                     "code": "http_401",
-                    "message": "Development login required",
+                    "message": "Authentication required",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -116,6 +116,23 @@
                   "error": {
                     "code": "validation_error",
                     "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Generation quota exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_429",
+                    "message": "Generation quota exceeded",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -209,13 +226,13 @@
             }
           },
           "401": {
-            "description": "Development login required",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "example": {
                   "error": {
                     "code": "http_401",
-                    "message": "Development login required",
+                    "message": "Authentication required",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -284,6 +301,23 @@
                   "error": {
                     "code": "validation_error",
                     "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Generation quota exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_429",
+                    "message": "Generation quota exceeded",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -388,7 +422,7 @@
             }
           },
           "401": {
-            "description": "Development login required",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "schema": {
@@ -397,7 +431,7 @@
                 "example": {
                   "error": {
                     "code": "http_401",
-                    "message": "Development login required",
+                    "message": "Authentication required",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 }
@@ -466,6 +500,23 @@
                   "error": {
                     "code": "validation_error",
                     "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Generation quota exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_429",
+                    "message": "Generation quota exceeded",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 }
@@ -545,7 +596,7 @@
             }
           },
           "401": {
-            "description": "Development login required",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "schema": {
@@ -554,7 +605,7 @@
                 "example": {
                   "error": {
                     "code": "http_401",
-                    "message": "Development login required",
+                    "message": "Authentication required",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 }
@@ -623,6 +674,23 @@
                   "error": {
                     "code": "validation_error",
                     "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Generation quota exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_429",
+                    "message": "Generation quota exceeded",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 }
@@ -707,7 +775,7 @@
             }
           },
           "401": {
-            "description": "Development login required",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "schema": {
@@ -716,7 +784,7 @@
                 "example": {
                   "error": {
                     "code": "http_401",
-                    "message": "Development login required",
+                    "message": "Authentication required",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 }
@@ -785,6 +853,23 @@
                   "error": {
                     "code": "validation_error",
                     "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Generation quota exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_429",
+                    "message": "Generation quota exceeded",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 }
@@ -870,7 +955,7 @@
             }
           },
           "401": {
-            "description": "Development login required",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "schema": {
@@ -879,7 +964,7 @@
                 "example": {
                   "error": {
                     "code": "http_401",
-                    "message": "Development login required",
+                    "message": "Authentication required",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 }
@@ -948,6 +1033,23 @@
                   "error": {
                     "code": "validation_error",
                     "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Generation quota exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                },
+                "example": {
+                  "error": {
+                    "code": "http_429",
+                    "message": "Generation quota exceeded",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 }
@@ -1039,13 +1141,13 @@
             }
           },
           "401": {
-            "description": "Development login required",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "example": {
                   "error": {
                     "code": "http_401",
-                    "message": "Development login required",
+                    "message": "Authentication required",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -1114,6 +1216,23 @@
                   "error": {
                     "code": "validation_error",
                     "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Generation quota exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_429",
+                    "message": "Generation quota exceeded",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -1223,13 +1342,13 @@
             }
           },
           "401": {
-            "description": "Development login required",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "example": {
                   "error": {
                     "code": "http_401",
-                    "message": "Development login required",
+                    "message": "Authentication required",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -1298,6 +1417,23 @@
                   "error": {
                     "code": "validation_error",
                     "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Generation quota exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_429",
+                    "message": "Generation quota exceeded",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -1431,13 +1567,13 @@
             }
           },
           "401": {
-            "description": "Development login required",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "example": {
                   "error": {
                     "code": "http_401",
-                    "message": "Development login required",
+                    "message": "Authentication required",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -1506,6 +1642,23 @@
                   "error": {
                     "code": "validation_error",
                     "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Generation quota exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_429",
+                    "message": "Generation quota exceeded",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -1625,13 +1778,13 @@
             }
           },
           "401": {
-            "description": "Development login required",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "example": {
                   "error": {
                     "code": "http_401",
-                    "message": "Development login required",
+                    "message": "Authentication required",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -1700,6 +1853,23 @@
                   "error": {
                     "code": "validation_error",
                     "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Generation quota exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_429",
+                    "message": "Generation quota exceeded",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -1821,13 +1991,13 @@
             }
           },
           "401": {
-            "description": "Development login required",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "example": {
                   "error": {
                     "code": "http_401",
-                    "message": "Development login required",
+                    "message": "Authentication required",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -1896,6 +2066,23 @@
                   "error": {
                     "code": "validation_error",
                     "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Generation quota exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_429",
+                    "message": "Generation quota exceeded",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -2017,13 +2204,13 @@
             }
           },
           "401": {
-            "description": "Development login required",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "example": {
                   "error": {
                     "code": "http_401",
-                    "message": "Development login required",
+                    "message": "Authentication required",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -2092,6 +2279,23 @@
                   "error": {
                     "code": "validation_error",
                     "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Generation quota exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_429",
+                    "message": "Generation quota exceeded",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -2202,13 +2406,13 @@
             }
           },
           "401": {
-            "description": "Development login required",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "example": {
                   "error": {
                     "code": "http_401",
-                    "message": "Development login required",
+                    "message": "Authentication required",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -2277,6 +2481,23 @@
                   "error": {
                     "code": "validation_error",
                     "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Generation quota exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_429",
+                    "message": "Generation quota exceeded",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -2371,13 +2592,13 @@
             }
           },
           "401": {
-            "description": "Development login required",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "example": {
                   "error": {
                     "code": "http_401",
-                    "message": "Development login required",
+                    "message": "Authentication required",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -2455,6 +2676,23 @@
               }
             }
           },
+          "429": {
+            "description": "Generation quota exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_429",
+                    "message": "Generation quota exceeded",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Internal error",
             "content": {
@@ -2500,6 +2738,224 @@
               "enum": [
                 "console"
               ]
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/google": {
+      "post": {
+        "summary": "Google Login",
+        "operationId": "google_login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleLoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginSession"
+                },
+                "example": {
+                  "token": "synthetic-session-token",
+                  "email": "owner@example.test",
+                  "expires_at": "2026-11-02T00:00:00Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_400",
+                    "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_401",
+                    "message": "Authentication required",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Local origin, host or client header rejected",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_403",
+                    "message": "Local origin, host or client header rejected",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_404",
+                    "message": "Resource not found",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "State conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_409",
+                    "message": "State conflict",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Generation quota exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_429",
+                    "message": "Generation quota exceeded",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_500",
+                    "message": "Internal error",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_503",
+                    "message": "Dependency unavailable",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-ProtoHub-Client",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "console"
+              ]
+            }
+          },
+          {
+            "name": "X-Requested-With",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "XmlHttpRequest"
+              ]
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
             }
           }
         ]
@@ -2564,13 +3020,13 @@
             }
           },
           "401": {
-            "description": "Development login required",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "example": {
                   "error": {
                     "code": "http_401",
-                    "message": "Development login required",
+                    "message": "Authentication required",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -2639,6 +3095,23 @@
                   "error": {
                     "code": "validation_error",
                     "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Generation quota exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_429",
+                    "message": "Generation quota exceeded",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -2763,13 +3236,13 @@
             }
           },
           "401": {
-            "description": "Development login required",
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "example": {
                   "error": {
                     "code": "http_401",
-                    "message": "Development login required",
+                    "message": "Authentication required",
                     "request_id": "00000000-0000-4000-8000-000000000001"
                   }
                 },
@@ -2847,6 +3320,1367 @@
               }
             }
           },
+          "429": {
+            "description": "Generation quota exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_429",
+                    "message": "Generation quota exceeded",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_500",
+                    "message": "Internal error",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_503",
+                    "message": "Dependency unavailable",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/apps": {
+      "get": {
+        "summary": "Ai List",
+        "operationId": "ai_list",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiApplicationList"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "00000000-0000-4000-8000-000000000003",
+                      "brief": {
+                        "purpose": "月次会議で予実を確認する",
+                        "audience": "会議の参加者",
+                        "success": "部門ごとの差が分かるか確認する"
+                      },
+                      "config": {
+                        "template": "management-dashboard",
+                        "title": "月次レポート",
+                        "subtitle": "サンプルの予実を確認",
+                        "color": "blue",
+                        "trend": true,
+                        "departments": true,
+                        "cash_flow": false
+                      },
+                      "summary": "予実と部門別の違いを確認する画面案です。",
+                      "model": "gemini-3.5-flash-lite",
+                      "status": "draft",
+                      "revision": 1,
+                      "usage": {
+                        "input_tokens": 100,
+                        "output_tokens": 120
+                      },
+                      "created_at": "2026-11-07T00:00:00Z",
+                      "updated_at": "2026-11-07T00:00:00Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_400",
+                    "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_401",
+                    "message": "Authentication required",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Local origin, host or client header rejected",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_403",
+                    "message": "Local origin, host or client header rejected",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_404",
+                    "message": "Resource not found",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "State conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_409",
+                    "message": "State conflict",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Generation quota exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_429",
+                    "message": "Generation quota exceeded",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_500",
+                    "message": "Internal error",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_503",
+                    "message": "Dependency unavailable",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^Bearer .+$"
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Ai Create",
+        "operationId": "ai_create",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiApplication"
+                },
+                "example": {
+                  "id": "00000000-0000-4000-8000-000000000003",
+                  "brief": {
+                    "purpose": "月次会議で予実を確認する",
+                    "audience": "会議の参加者",
+                    "success": "部門ごとの差が分かるか確認する"
+                  },
+                  "config": {
+                    "template": "management-dashboard",
+                    "title": "月次レポート",
+                    "subtitle": "サンプルの予実を確認",
+                    "color": "blue",
+                    "trend": true,
+                    "departments": true,
+                    "cash_flow": false
+                  },
+                  "summary": "予実と部門別の違いを確認する画面案です。",
+                  "model": "gemini-3.5-flash-lite",
+                  "status": "draft",
+                  "revision": 1,
+                  "usage": {
+                    "input_tokens": 100,
+                    "output_tokens": 120
+                  },
+                  "created_at": "2026-11-07T00:00:00Z",
+                  "updated_at": "2026-11-07T00:00:00Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_400",
+                    "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_401",
+                    "message": "Authentication required",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Local origin, host or client header rejected",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_403",
+                    "message": "Local origin, host or client header rejected",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_404",
+                    "message": "Resource not found",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "State conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_409",
+                    "message": "State conflict",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Generation quota exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_429",
+                    "message": "Generation quota exceeded",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_500",
+                    "message": "Internal error",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_503",
+                    "message": "Dependency unavailable",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-ProtoHub-Client",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "console"
+              ]
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^Bearer .+$"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/ai/apps/{application_id}": {
+      "get": {
+        "summary": "Ai Get",
+        "operationId": "ai_get",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Application Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^Bearer .+$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiApplication"
+                },
+                "example": {
+                  "id": "00000000-0000-4000-8000-000000000003",
+                  "brief": {
+                    "purpose": "月次会議で予実を確認する",
+                    "audience": "会議の参加者",
+                    "success": "部門ごとの差が分かるか確認する"
+                  },
+                  "config": {
+                    "template": "management-dashboard",
+                    "title": "月次レポート",
+                    "subtitle": "サンプルの予実を確認",
+                    "color": "blue",
+                    "trend": true,
+                    "departments": true,
+                    "cash_flow": false
+                  },
+                  "summary": "予実と部門別の違いを確認する画面案です。",
+                  "model": "gemini-3.5-flash-lite",
+                  "status": "draft",
+                  "revision": 1,
+                  "usage": {
+                    "input_tokens": 100,
+                    "output_tokens": 120
+                  },
+                  "created_at": "2026-11-07T00:00:00Z",
+                  "updated_at": "2026-11-07T00:00:00Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_400",
+                    "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_401",
+                    "message": "Authentication required",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Local origin, host or client header rejected",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_403",
+                    "message": "Local origin, host or client header rejected",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_404",
+                    "message": "Resource not found",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "State conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_409",
+                    "message": "State conflict",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Generation quota exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_429",
+                    "message": "Generation quota exceeded",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_500",
+                    "message": "Internal error",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_503",
+                    "message": "Dependency unavailable",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Ai Delete",
+        "operationId": "ai_delete",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Application Id"
+            }
+          },
+          {
+            "name": "X-ProtoHub-Client",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "console"
+              ]
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^Bearer .+$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogoutResult"
+                },
+                "example": {
+                  "status": "ok"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_400",
+                    "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_401",
+                    "message": "Authentication required",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Local origin, host or client header rejected",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_403",
+                    "message": "Local origin, host or client header rejected",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_404",
+                    "message": "Resource not found",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "State conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_409",
+                    "message": "State conflict",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Generation quota exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_429",
+                    "message": "Generation quota exceeded",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_500",
+                    "message": "Internal error",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_503",
+                    "message": "Dependency unavailable",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/apps/{application_id}/revise": {
+      "post": {
+        "summary": "Ai Revise",
+        "operationId": "ai_revise",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Application Id"
+            }
+          },
+          {
+            "name": "X-ProtoHub-Client",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "console"
+              ]
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^Bearer .+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiReviseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiApplication"
+                },
+                "example": {
+                  "id": "00000000-0000-4000-8000-000000000003",
+                  "brief": {
+                    "purpose": "月次会議で予実を確認する",
+                    "audience": "会議の参加者",
+                    "success": "部門ごとの差が分かるか確認する"
+                  },
+                  "config": {
+                    "template": "management-dashboard",
+                    "title": "月次レポート",
+                    "subtitle": "サンプルの予実を確認",
+                    "color": "blue",
+                    "trend": true,
+                    "departments": true,
+                    "cash_flow": false
+                  },
+                  "summary": "予実と部門別の違いを確認する画面案です。",
+                  "model": "gemini-3.5-flash-lite",
+                  "status": "draft",
+                  "revision": 2,
+                  "usage": {
+                    "input_tokens": 100,
+                    "output_tokens": 120
+                  },
+                  "created_at": "2026-11-07T00:00:00Z",
+                  "updated_at": "2026-11-07T00:00:00Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_400",
+                    "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_401",
+                    "message": "Authentication required",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Local origin, host or client header rejected",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_403",
+                    "message": "Local origin, host or client header rejected",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_404",
+                    "message": "Resource not found",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "State conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_409",
+                    "message": "State conflict",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Generation quota exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_429",
+                    "message": "Generation quota exceeded",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_500",
+                    "message": "Internal error",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_503",
+                    "message": "Dependency unavailable",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/apps/{application_id}/confirm": {
+      "post": {
+        "summary": "Ai Confirm",
+        "operationId": "ai_confirm",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Application Id"
+            }
+          },
+          {
+            "name": "X-ProtoHub-Client",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "console"
+              ]
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^Bearer .+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiConfirmRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiApplication"
+                },
+                "example": {
+                  "id": "00000000-0000-4000-8000-000000000003",
+                  "brief": {
+                    "purpose": "月次会議で予実を確認する",
+                    "audience": "会議の参加者",
+                    "success": "部門ごとの差が分かるか確認する"
+                  },
+                  "config": {
+                    "template": "management-dashboard",
+                    "title": "月次レポート",
+                    "subtitle": "サンプルの予実を確認",
+                    "color": "blue",
+                    "trend": true,
+                    "departments": true,
+                    "cash_flow": false
+                  },
+                  "summary": "予実と部門別の違いを確認する画面案です。",
+                  "model": "gemini-3.5-flash-lite",
+                  "status": "ready",
+                  "revision": 1,
+                  "usage": {
+                    "input_tokens": 100,
+                    "output_tokens": 120
+                  },
+                  "created_at": "2026-11-07T00:00:00Z",
+                  "updated_at": "2026-11-07T00:00:00Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_400",
+                    "message": "Invalid request",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_401",
+                    "message": "Authentication required",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Local origin, host or client header rejected",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_403",
+                    "message": "Local origin, host or client header rejected",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_404",
+                    "message": "Resource not found",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "State conflict",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_409",
+                    "message": "State conflict",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Validation failed",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Generation quota exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": {
+                    "code": "http_429",
+                    "message": "Generation quota exceeded",
+                    "request_id": "00000000-0000-4000-8000-000000000001"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Internal error",
             "content": {
@@ -2895,6 +4729,274 @@
           "delete"
         ],
         "title": "Action"
+      },
+      "AiApplication": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "brief": {
+            "$ref": "#/components/schemas/AiBrief"
+          },
+          "config": {
+            "$ref": "#/components/schemas/AiConfig"
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Summary"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "ready"
+            ],
+            "title": "Status"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Revision"
+          },
+          "usage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AiUsage"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "brief",
+          "config",
+          "summary",
+          "model",
+          "status",
+          "revision",
+          "usage",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "AiApplication"
+      },
+      "AiApplicationList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AiApplication"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "AiApplicationList"
+      },
+      "AiBrief": {
+        "properties": {
+          "purpose": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Purpose"
+          },
+          "audience": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Audience"
+          },
+          "success": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Success"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "purpose",
+          "audience",
+          "success"
+        ],
+        "title": "AiBrief"
+      },
+      "AiConfig": {
+        "properties": {
+          "template": {
+            "type": "string",
+            "enum": [
+              "hello-web",
+              "management-dashboard"
+            ],
+            "title": "Template"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Title"
+          },
+          "subtitle": {
+            "type": "string",
+            "maxLength": 160,
+            "title": "Subtitle"
+          },
+          "color": {
+            "type": "string",
+            "enum": [
+              "purple",
+              "blue",
+              "green"
+            ],
+            "title": "Color"
+          },
+          "trend": {
+            "type": "boolean",
+            "title": "Trend"
+          },
+          "departments": {
+            "type": "boolean",
+            "title": "Departments"
+          },
+          "cash_flow": {
+            "type": "boolean",
+            "title": "Cash Flow"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "template",
+          "title",
+          "subtitle",
+          "color",
+          "trend",
+          "departments",
+          "cash_flow"
+        ],
+        "title": "AiConfig"
+      },
+      "AiConfirmRequest": {
+        "properties": {
+          "expected_revision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Expected Revision"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "expected_revision"
+        ],
+        "title": "AiConfirmRequest"
+      },
+      "AiCreateRequest": {
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Request Id"
+          },
+          "brief": {
+            "$ref": "#/components/schemas/AiBrief"
+          },
+          "config": {
+            "$ref": "#/components/schemas/AiConfig"
+          },
+          "instruction": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Instruction",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "request_id",
+          "brief",
+          "config"
+        ],
+        "title": "AiCreateRequest"
+      },
+      "AiReviseRequest": {
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Request Id"
+          },
+          "expected_revision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Expected Revision"
+          },
+          "instruction": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Instruction"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "request_id",
+          "expected_revision",
+          "instruction"
+        ],
+        "title": "AiReviseRequest"
+      },
+      "AiUsage": {
+        "properties": {
+          "input_tokens": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Input Tokens"
+          },
+          "output_tokens": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Output Tokens"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "input_tokens",
+          "output_tokens"
+        ],
+        "title": "AiUsage"
       },
       "CreateSandbox": {
         "properties": {
@@ -2953,6 +5055,23 @@
           "message"
         ],
         "title": "Error"
+      },
+      "GoogleLoginRequest": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 4096,
+            "minLength": 1,
+            "pattern": "^[!-~]+$",
+            "title": "Code"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "title": "GoogleLoginRequest"
       },
       "Health": {
         "properties": {
@@ -3316,10 +5435,33 @@
             "type": "string",
             "enum": [
               "local-dev",
+              "google",
               "disabled"
             ],
             "title": "Auth Mode",
             "default": "local-dev"
+          },
+          "google_client_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Google Client Id"
+          },
+          "preview_origin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preview Origin"
           },
           "constraints": {
             "items": {
@@ -3327,6 +5469,22 @@
             },
             "type": "array",
             "title": "Constraints"
+          },
+          "ai_enabled": {
+            "type": "boolean",
+            "title": "Ai Enabled",
+            "default": false
+          },
+          "ai_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Model"
           }
         },
         "additionalProperties": false,

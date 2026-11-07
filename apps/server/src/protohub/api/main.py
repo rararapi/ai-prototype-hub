@@ -12,10 +12,13 @@ from sqlalchemy.orm import Session, sessionmaker
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException
 
+from protohub.api.ai import install_ai_routes
+from protohub.api.google import GoogleDenied, GoogleUnavailable, exchange_code
 from protohub.domain.http_contract import new_app, route
 from protohub.domain.models import (
     Action,
     CreateSandbox,
+    GoogleLoginRequest,
     Health,
     LoginRequest,
     LogoutResult,
@@ -78,7 +81,7 @@ def create_app(
         allow_origins=[config.console_origin],
         allow_credentials=False,
         allow_methods=["GET", "POST", "PUT", "DELETE"],
-        allow_headers=["Content-Type", "X-ProtoHub-Client", "Authorization"],
+        allow_headers=["Content-Type", "X-ProtoHub-Client", "Authorization", "X-Requested-With"],
     )
 
     @application.middleware("http")
@@ -104,29 +107,45 @@ def create_app(
                 return error_response(request, 422, "validation_error", "Invalid JSON request")
             if not isinstance(payload, dict):
                 return error_response(request, 422, "validation_error", "JSON object is required")
-            accepts_fields = request.url.path in {"/api/v1/sandboxes", "/api/v1/auth/login"} or (
-                request.method == "PUT" and request.url.path.endswith("/shares")
+            accepts_fields = (
+                request.url.path
+                in {
+                    "/api/v1/sandboxes",
+                    "/api/v1/auth/login",
+                    "/api/v1/auth/google",
+                }
+                or (request.method == "PUT" and request.url.path.endswith("/shares"))
+                or (
+                    request.method == "POST"
+                    and (
+                        request.url.path == "/api/v1/ai/apps"
+                        or (
+                            request.url.path.startswith("/api/v1/ai/apps/")
+                            and request.url.path.rsplit("/", 1)[-1] in {"revise", "confirm"}
+                        )
+                    )
+                )
             )
             if not accepts_fields and payload:
                 return error_response(request, 422, "validation_error", "Unknown action fields")
-        public_paths = {"/api/v1/system", "/api/v1/templates", "/api/v1/auth/login"}
+        public_paths = {"/api/v1/system", "/api/v1/auth/login", "/api/v1/auth/google"}
+        if not config.google_login:
+            public_paths.add("/api/v1/templates")
         if (
             request.url.path.startswith("/api/v1/")
             and request.url.path not in public_paths
             and request.method != "OPTIONS"
         ):
-            if not config.dev_login_enabled:
-                return error_response(
-                    request, 401, "login_disabled", "Development login is disabled"
-                )
+            if not config.dev_login_enabled and not config.google_ready:
+                return error_response(request, 401, "login_disabled", "Login is disabled")
             try:
                 request.state.principal = await run_in_threadpool(
-                    sessions.authenticate, request.headers.get("authorization")
+                    sessions.authenticate,
+                    request.headers.get("authorization"),
+                    google=config.google_login,
                 )
             except AuthenticationRequired:
-                return error_response(
-                    request, 401, "login_required", "Development login is required"
-                )
+                return error_response(request, 401, "login_required", "Login is required")
             except SQLAlchemyError:
                 return error_response(
                     request, 503, "dependency_unavailable", "Database is unavailable"
@@ -177,16 +196,24 @@ def create_app(
     def system():
         constraints = [
             "Trusted templates only",
-            "Localhost only",
-            "No production authentication",
+            "Configured console origin only" if config.google_login else "Localhost only",
+            "Registered Google accounts only"
+            if config.google_ready
+            else "No production authentication",
             "No hostile-code isolation",
         ]
         if config.runtime_mode == "mock":
             constraints.append("Mock runtime does not start applications")
         return SystemInfo(
             runtime_mode=config.runtime_mode,
-            auth_mode="local-dev" if config.dev_login_enabled else "disabled",
+            auth_mode="google"
+            if config.google_ready
+            else ("local-dev" if config.dev_login_enabled else "disabled"),
+            google_client_id=config.google_client_id if config.google_ready else None,
+            preview_origin=config.preview_origin if config.google_ready else None,
             constraints=constraints,
+            ai_enabled=config.ai_ready,
+            ai_model=config.ai_model if config.ai_ready else None,
         )
 
     @route(application, "templates")
@@ -198,6 +225,25 @@ def create_app(
         if not config.dev_login_enabled:
             raise HTTPException(status_code=404)
         return sessions.login(payload.email)
+
+    @route(application, "google_login")
+    def google_login(payload: GoogleLoginRequest, request: Request):
+        if not config.google_ready:
+            raise HTTPException(status_code=404)
+        if (
+            request.headers.get("origin") != config.console_origin
+            or request.headers.get("x-requested-with") != "XmlHttpRequest"
+        ):
+            return error_response(request, 403, "login_origin_rejected", "Invalid sign-in request")
+        try:
+            identity = exchange_code(config, payload.code)
+            return sessions.login_google(identity.email, identity.subject, identity.authoritative)
+        except (GoogleDenied, AuthenticationRequired):
+            return error_response(request, 403, "login_denied", "Google account is not authorized")
+        except GoogleUnavailable:
+            return error_response(
+                request, 503, "google_unavailable", "Google sign-in is unavailable"
+            )
 
     @route(application, "me")
     def me(request: Request):
@@ -244,6 +290,7 @@ def create_app(
     def get_operation(operation_id: UUID, request: Request):
         return repository.get_operation(operation_id, request.state.principal.email)
 
+    install_ai_routes(application, config, factory)
     return application
 
 

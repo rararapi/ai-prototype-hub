@@ -1,0 +1,48 @@
+name: Publish browser demo
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Install checksum-verified Node in the runner workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          curl --fail --location --retry 3 -o SHASUMS256.txt https://nodejs.org/dist/v24.18.0/SHASUMS256.txt
+          curl --fail --location --retry 3 -o node-v24.18.0-linux-x64.tar.xz https://nodejs.org/dist/v24.18.0/node-v24.18.0-linux-x64.tar.xz
+          sha256sum --check --ignore-missing SHASUMS256.txt
+          tar -xf node-v24.18.0-linux-x64.tar.xz
+          echo "$RUNNER_TEMP/node-v24.18.0-linux-x64/bin" >> "$GITHUB_PATH"
+      - run: npm ci --prefix apps/web --no-audit --no-fund
+      - run: npm ci --prefix tests/e2e --no-audit --no-fund
+      - run: tests/e2e/node_modules/.bin/playwright install --with-deps chromium
+      - name: Verify and build the static demo
+        run: bash scripts/checks/pages-demo.sh
+      - uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
+        with:
+          path: apps/web/dist
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
+        id: deployment

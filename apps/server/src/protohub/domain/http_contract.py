@@ -6,6 +6,8 @@ from fastapi import FastAPI
 
 from protohub.domain.examples import EXAMPLES
 from protohub.domain.models import (
+    AiApplication,
+    AiApplicationList,
     Health,
     HttpError,
     LoginSession,
@@ -20,6 +22,13 @@ from protohub.domain.models import (
 )
 
 ROUTES: dict[str, tuple[str, str, Any, int]] = {
+    "ai_list": ("GET", "/api/v1/ai/apps", AiApplicationList, 200),
+    "ai_get": ("GET", "/api/v1/ai/apps/{application_id}", AiApplication, 200),
+    "ai_create": ("POST", "/api/v1/ai/apps", AiApplication, 201),
+    "ai_revise": ("POST", "/api/v1/ai/apps/{application_id}/revise", AiApplication, 200),
+    "ai_confirm": ("POST", "/api/v1/ai/apps/{application_id}/confirm", AiApplication, 200),
+    "ai_delete": ("DELETE", "/api/v1/ai/apps/{application_id}", LogoutResult, 200),
+    "google_login": ("POST", "/api/v1/auth/google", LoginSession, 200),
     "login": ("POST", "/api/v1/auth/login", LoginSession, 200),
     "me": ("GET", "/api/v1/auth/me", Principal, 200),
     "logout": ("POST", "/api/v1/auth/logout", LogoutResult, 200),
@@ -48,11 +57,12 @@ def route(app: FastAPI, name: str) -> Any:
     responses: dict[int | str, Any] = {}
     for code, message in {
         400: "Invalid request",
-        401: "Development login required",
+        401: "Authentication required",
         403: "Local origin, host or client header rejected",
         404: "Resource not found",
         409: "State conflict",
         422: "Validation failed",
+        429: "Generation quota exceeded",
         500: "Internal error",
         503: "Dependency unavailable",
     }.items():
@@ -84,7 +94,7 @@ def route(app: FastAPI, name: str) -> Any:
                 }
             ]
         }
-    if name not in {"health", "ready", "system", "templates", "login"}:
+    if name not in {"health", "ready", "system", "templates", "login", "google_login"}:
         extra = extra or {}
         extra.setdefault("parameters", []).append(
             {
@@ -93,6 +103,19 @@ def route(app: FastAPI, name: str) -> Any:
                 "required": True,
                 "schema": {"type": "string", "pattern": "^Bearer .+$"},
             }
+        )
+    if name == "google_login":
+        assert extra is not None
+        extra["parameters"].extend(
+            [
+                {
+                    "name": "X-Requested-With",
+                    "in": "header",
+                    "required": True,
+                    "schema": {"type": "string", "enum": ["XmlHttpRequest"]},
+                },
+                {"name": "Origin", "in": "header", "required": True, "schema": {"type": "string"}},
+            ]
         )
     return app.api_route(
         path,

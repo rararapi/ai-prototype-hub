@@ -3,6 +3,9 @@
 サンプルアプリを画面で登録し、起動して、ブラウザで試せるローカルの管理ツールです。
 現在のv0は、信頼済みの固定テンプレート `hello-web` を扱うlocalhost専用MVPです。
 
+クラウドで実サンプルを動かす開発用構成は [GKE への配備と AKS への移行](docs/MANAGED_KUBERNETES.md)
+を参照してください。独自ドメインを使わず公開するには [東京の Cloud Run 標準 URL と Google ログイン](docs/RUN_APP.md) を利用できます。利用者は管理者が登録した Google アカウントに限定します。
+
 ![ProtoHubでできること。Hello WebをデモAとして登録し、起動中からReadyになるのを待ち、アプリを開いてHello ProtoHubのカウンターボタンを操作する。使った後はアプリごとに停止・起動・削除でき、デモAを止めてもデモBは動き続ける。](docs/images/protohub-concept.png)
 
 *real-kindでの操作例を描いた生成イラストです。実画面・検証証跡ではありません。
@@ -238,3 +241,11 @@ ProtoHub本体は [MIT License](LICENSE) です。著作権・ライセンス表
 全アプリの共通LLMキーはサーバー側の `PROTOHUB_LLM_API_KEY` で設定します。
 設定方法、既存レコードの扱い、開発ログインの制限は
 [開発ログイン・共有・共通キー](docs/DEVELOPMENT_AUTH.md) を参照してください。
+
+## Geminiで画面案を作成する
+
+既存のGoogleログイン付きGCPコンソールでは、サーバー側のVertex Geminiを使って
+固定構成の画面案を生成・確認・保存・修正できる。所有者ごとのDB永続化、版の競合検知、
+再送の冪等性、利用回数の制限を持つ。ブラウザへAPIキーは配布しない。
+[仕様と設定](docs/GEMINI_CREATION.md)・[既存GCPへの更新](docs/RUN_APP.md)を参照。
+GitHub Pagesの操作デモは引き続きオフライン。生成コードや任意コンテナの実行は対象外。

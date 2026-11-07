@@ -59,3 +59,40 @@ EXAMPLES = {
     "delete_sandbox": {**OPERATION, "action": "delete"},
     "get_operation": OPERATION,
 }
+
+EXAMPLES["google_login"] = EXAMPLES["login"]
+
+AI_APPLICATION = {
+    "id": "00000000-0000-4000-8000-000000000003",
+    "brief": {
+        "purpose": "月次会議で予実を確認する",
+        "audience": "会議の参加者",
+        "success": "部門ごとの差が分かるか確認する",
+    },
+    "config": {
+        "template": "management-dashboard",
+        "title": "月次レポート",
+        "subtitle": "サンプルの予実を確認",
+        "color": "blue",
+        "trend": True,
+        "departments": True,
+        "cash_flow": False,
+    },
+    "summary": "予実と部門別の違いを確認する画面案です。",
+    "model": "gemini-3.5-flash-lite",
+    "status": "draft",
+    "revision": 1,
+    "usage": {"input_tokens": 100, "output_tokens": 120},
+    "created_at": "2026-11-07T00:00:00Z",
+    "updated_at": "2026-11-07T00:00:00Z",
+}
+EXAMPLES.update(
+    {
+        "ai_list": {"items": [AI_APPLICATION]},
+        "ai_get": AI_APPLICATION,
+        "ai_create": AI_APPLICATION,
+        "ai_revise": {**AI_APPLICATION, "revision": 2},
+        "ai_confirm": {**AI_APPLICATION, "status": "ready"},
+        "ai_delete": {"status": "ok"},
+    }
+)

@@ -15,7 +15,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "generate:api": "openapi-typescript ../../contracts/openapi.yaml -o src/generated/api.d.ts",
-    "check:api": "node scripts/check-api.mjs"
+    "check:api": "node scripts/check-api.mjs",
+    "build:demo": "tsc --noEmit && vite build --mode demo --base ./"
   },
   "dependencies": {
     "react": "19.3.1",

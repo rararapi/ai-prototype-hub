@@ -23,7 +23,8 @@
       "public-hygiene",
       "integration",
       "e2e",
-      "security"
+      "security",
+      "managed"
     ],
     "integration": [
       "integration"
@@ -48,6 +49,21 @@
       "contracts-host",
       "unit-host",
       "build-host"
+    ],
+    "managed": [
+      "harness-self",
+      "public-hygiene",
+      "managed"
+    ],
+    "google-accounts": [
+      "harness-self",
+      "public-hygiene",
+      "managed",
+      "google-login"
+    ],
+    "gemini-live": [
+      "public-hygiene",
+      "gemini-live"
     ]
   },
   "gates": [
@@ -352,6 +368,64 @@
         "apps/web/package-lock.json"
       ],
       "depends_on": [],
+      "blocked_exit_codes": [
+        78
+      ]
+    },
+    {
+      "id": "managed",
+      "argv": [
+        "bash",
+        "scripts/checks/managed.sh"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 120,
+      "required_paths": [
+        "infra/managed/render.py",
+        "infra/managed/deploy.py",
+        "infra/managed/network.yaml",
+        "tests/managed/test_render.py",
+        "tests/managed/test_network.py",
+        "tests/managed/test_deploy.py"
+      ],
+      "depends_on": [],
+      "blocked_exit_codes": [
+        78
+      ]
+    },
+    {
+      "id": "google-login",
+      "argv": [
+        "bash",
+        "scripts/checks/google-login.sh"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 600,
+      "required_paths": [
+        "scripts/checks/google-login.sh",
+        "apps/server/src/protohub/api/google.py",
+        "apps/web/src/GoogleLogin.tsx",
+        "apps/web/src/GooglePreview.tsx"
+      ],
+      "depends_on": [],
+      "blocked_exit_codes": [
+        78
+      ]
+    },
+    {
+      "id": "gemini-live",
+      "argv": [
+        "python3",
+        "scripts/checks/gemini_live.py"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 120,
+      "required_paths": [
+        "scripts/checks/gemini_live.py"
+      ],
+      "depends_on": [
+        "public-hygiene"
+      ],
       "blocked_exit_codes": [
         78
       ]
