@@ -27,7 +27,13 @@ beforeEach(() => {
   vi.mocked(aiClient.remove).mockResolvedValue({ status: 'ok' });
 });
 
+function continueToDetails(purpose = application.brief.purpose) {
+  fireEvent.change(screen.getByLabelText('作りたいアプリ・実現したいこと'), { target: { value: purpose } });
+  fireEvent.click(screen.getByRole('button', { name: 'つづける' }));
+}
+
 function fillBrief() {
+  if (screen.queryByLabelText('作りたいアプリ・実現したいこと')) continueToDetails();
   fireEvent.change(screen.getByLabelText('アプリ名'), { target: { value: '希望した名前' } });
   fireEvent.change(screen.getByLabelText('何をできるようにしたいですか？'), { target: { value: application.brief.purpose } });
   fireEvent.change(screen.getByLabelText('誰が使いますか？'), { target: { value: application.brief.audience } });
@@ -46,15 +52,106 @@ async function resume() {
   await screen.findByRole('heading', { name: '生成結果の確認' });
 }
 
-it('requires business decisions before a model request and focuses the first missing answer', async () => {
+it('starts with one empty idea field and no preset dashboard or model write', async () => {
   render(<AiStudio />);
   await screen.findByText(/まだ画面案はありません/);
-  expect(screen.getByText(/入力内容はサーバーからGeminiへ送信/)).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'Geminiで画面案を生成' }));
-  expect(screen.getByLabelText('何をできるようにしたいですか？')).toHaveFocus();
-  expect(screen.getAllByText('内容を入力してください。')).toHaveLength(3);
+  expect(screen.getByRole('heading', { name: 'どんなアプリを作りたいですか？' })).toBeInTheDocument();
+  const idea = screen.getByLabelText('作りたいアプリ・実現したいこと');
+  expect(idea).toHaveValue('');
+  expect(idea).toHaveAttribute('placeholder', expect.stringContaining('例:'));
+  expect(idea).toHaveAttribute('maxlength', '300');
+  expect(screen.getAllByRole('textbox')).toHaveLength(1);
+  expect(screen.queryByText('経営管理ダッシュボード')).not.toBeInTheDocument();
+  expect(screen.queryByLabelText('アプリ名')).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Geminiで画面案を生成' })).not.toBeInTheDocument();
+  expect(screen.getByText(/画面案を生成すると、入力内容をGeminiへ送信/)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'つづける' }));
+  expect(idea).toHaveFocus();
+  expect(screen.getByText('作りたいことを入力してください。')).toBeInTheDocument();
   expect(aiClient.create).not.toHaveBeenCalled();
+  expect(aiClient.revise).not.toHaveBeenCalled();
+  expect(aiClient.confirm).not.toHaveBeenCalled();
+  expect(aiClient.remove).not.toHaveBeenCalled();
   expect(screen.queryByTestId('ai-canvas')).not.toBeInTheDocument();
+});
+
+it('requires a trimmed idea of at most 300 characters before locally continuing', async () => {
+  render(<AiStudio />);
+  await screen.findByText(/まだ画面案はありません/);
+  continueToDetails('   ');
+  expect(screen.queryByLabelText('アプリ名')).not.toBeInTheDocument();
+  continueToDetails('あ'.repeat(301));
+  expect(screen.getByLabelText('作りたいアプリ・実現したいこと')).toHaveFocus();
+  expect(screen.getByText('300文字以内で入力してください。', { selector: '.ai-field-error' })).toBeInTheDocument();
+  continueToDetails('  参加申込を受け付けたい  ');
+  expect(screen.getByLabelText('何をできるようにしたいですか？')).toHaveValue('参加申込を受け付けたい');
+  for (const label of ['アプリ名', '画面の説明文', '誰が使いますか？', '画面見本で、どんなことを確かめたいですか？']) {
+    expect(screen.getByLabelText(label)).toHaveValue('');
+  }
+  expect(screen.getByLabelText('最初に試す画面')).toHaveValue('hello-web');
+  expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  expect(aiClient.create).not.toHaveBeenCalled();
+  expect(aiClient.revise).not.toHaveBeenCalled();
+  expect(aiClient.confirm).not.toHaveBeenCalled();
+  expect(aiClient.remove).not.toHaveBeenCalled();
+});
+
+it('preserves explicit details when editing the idea and only enables dashboard flags by choice', async () => {
+  render(<AiStudio />);
+  await screen.findByText(/まだ画面案はありません/);
+  fillBrief();
+  fireEvent.change(screen.getByLabelText('画面の説明文'), { target: { value: '自分で入力した説明文' } });
+  fireEvent.change(screen.getByLabelText('最初の追加要望（任意）'), { target: { value: '見出しを短く' } });
+  fireEvent.change(screen.getByLabelText('最初に試す画面'), { target: { value: 'management-dashboard' } });
+  for (const checkbox of screen.getAllByRole('checkbox')) expect(checkbox).not.toBeChecked();
+  fireEvent.click(screen.getByRole('checkbox', { name: '部門別の表' }));
+  fireEvent.click(screen.getByRole('button', { name: '作りたいことを編集' }));
+  expect(screen.getAllByRole('textbox')).toHaveLength(1);
+  expect(screen.getByLabelText('作りたいアプリ・実現したいこと')).toHaveValue(application.brief.purpose);
+  continueToDetails('参加申込の管理もしたい');
+  expect(screen.getByLabelText('何をできるようにしたいですか？')).toHaveValue('参加申込の管理もしたい');
+  expect(screen.getByLabelText('アプリ名')).toHaveValue('希望した名前');
+  expect(screen.getByLabelText('画面の説明文')).toHaveValue('自分で入力した説明文');
+  expect(screen.getByLabelText('誰が使いますか？')).toHaveValue(application.brief.audience);
+  expect(screen.getByLabelText('画面見本で、どんなことを確かめたいですか？')).toHaveValue(application.brief.success);
+  expect(screen.getByLabelText('最初の追加要望（任意）')).toHaveValue('見出しを短く');
+  expect(screen.getByRole('checkbox', { name: '部門別の表' })).toBeChecked();
+  expect(aiClient.create).not.toHaveBeenCalled();
+});
+
+it('requires a user supplied app name and missing decisions before generating', async () => {
+  render(<AiStudio />);
+  await screen.findByText(/まだ画面案はありません/);
+  continueToDetails();
+  fireEvent.click(screen.getByRole('button', { name: 'Geminiで画面案を生成' }));
+  expect(screen.getByLabelText('アプリ名')).toHaveFocus();
+  expect(screen.getByText('アプリ名を入力してください。')).toBeInTheDocument();
+  expect(screen.getAllByText('内容を入力してください。')).toHaveLength(2);
+  expect(aiClient.create).not.toHaveBeenCalled();
+});
+
+it('starts a new empty idea after a saved plan without copying model generated defaults', async () => {
+  await resume();
+  fireEvent.click(screen.getByRole('button', { name: '新しい画面案' }));
+  expect(screen.getByLabelText('作りたいアプリ・実現したいこと')).toHaveValue('');
+  continueToDetails('イベントの案内を作りたい');
+  expect(screen.getByLabelText('アプリ名')).toHaveValue('');
+  expect(screen.getByLabelText('画面の説明文')).toHaveValue('');
+  expect(screen.getByLabelText('最初に試す画面')).toHaveValue('hello-web');
+  expect(aiClient.create).not.toHaveBeenCalled();
+});
+
+it('preserves an unsent human draft while resuming and leaving a saved plan', async () => {
+  vi.mocked(aiClient.list).mockResolvedValue({ items: [application] });
+  render(<AiStudio />);
+  fillBrief();
+  fireEvent.click(await screen.findByRole('button', { name: /Geminiによる月次レポート/ }));
+  await screen.findByRole('heading', { name: '生成結果の確認' });
+  fireEvent.click(screen.getByRole('button', { name: '新しい画面案' }));
+  expect(screen.getByLabelText('作りたいアプリ・実現したいこと')).toHaveValue(application.brief.purpose);
+  fireEvent.click(screen.getByRole('button', { name: 'つづける' }));
+  expect(screen.getByLabelText('アプリ名')).toHaveValue('希望した名前');
+  expect(aiClient.create).not.toHaveBeenCalled();
 });
 
 it('reviews the actual generated result and confirms only its revision without another generation call', async () => {
@@ -199,6 +296,7 @@ it('shows only relevant options for a simple page and sends no dashboard flags',
   render(<AiStudio />);
   await screen.findByText(/まだ画面案はありません/);
   fillBrief();
+  fireEvent.change(screen.getByLabelText('最初に試す画面'), { target: { value: 'management-dashboard' } });
   fireEvent.click(screen.getByRole('checkbox', { name: '部門別の表' }));
   fireEvent.change(screen.getByLabelText('最初に試す画面'), { target: { value: 'hello-web' } });
   expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
@@ -297,7 +395,9 @@ it('clears the ambiguous create UUID when the user explicitly starts a new plan'
   await screen.findByRole('alert');
   const firstId = vi.mocked(aiClient.create).mock.calls[0][0].request_id;
   fireEvent.click(screen.getByRole('button', { name: '新しい画面案' }));
-  expect(screen.getByLabelText('何をできるようにしたいですか？')).toHaveValue(application.brief.purpose);
+  expect(screen.getByLabelText('作りたいアプリ・実現したいこと')).toHaveValue(application.brief.purpose);
+  fireEvent.click(screen.getByRole('button', { name: 'つづける' }));
+  expect(screen.getByLabelText('アプリ名')).toHaveValue('希望した名前');
   fireEvent.click(screen.getByRole('button', { name: 'Geminiで画面案を生成' }));
   await screen.findByRole('heading', { name: '生成結果の確認' });
   expect(vi.mocked(aiClient.create).mock.calls[1][0].request_id).not.toBe(firstId);

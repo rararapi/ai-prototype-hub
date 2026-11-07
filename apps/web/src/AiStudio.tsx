@@ -10,9 +10,8 @@ type Busy = 'loading' | 'creating' | 'revising' | 'confirming' | 'deleting' | nu
 type FormErrors = Partial<Record<keyof AiBrief | 'title' | 'instruction', string>>;
 type Retry<T> = { fingerprint: string; payload: T };
 const initialConfig: AiConfig = {
-  template: 'management-dashboard', title: '経営管理ダッシュボード',
-  subtitle: '売上・費用・利益と予実を、ひと目で。',
-  color: 'purple', trend: true, departments: false, cash_flow: false,
+  template: 'hello-web', title: '', subtitle: '',
+  color: 'purple', trend: false, departments: false, cash_flow: false,
 };
 const emptyBrief: AiBrief = { purpose: '', audience: '', success: '' };
 const dates = new Intl.DateTimeFormat('ja-JP', { dateStyle: 'short', timeStyle: 'short' });
@@ -48,6 +47,7 @@ export default function AiStudio({ onClose }: { onClose?: () => void }) {
   const [listError, setListError] = useState('');
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<AiApplication | null>(null);
+  const [stage, setStage] = useState<'idea' | 'details'>('idea');
   const [config, setConfig] = useState<AiConfig>(() => ({ ...initialConfig }));
   const [brief, setBrief] = useState<AiBrief>(() => ({ ...emptyBrief }));
   const [firstInstruction, setFirstInstruction] = useState('');
@@ -151,6 +151,35 @@ export default function AiStudio({ onClose }: { onClose?: () => void }) {
     });
   }
 
+  function continueIdea(event: FormEvent) {
+    event.preventDefault();
+    if (active.current) return;
+    const purpose = brief.purpose.trim();
+    if (!purpose || purpose.length > 300) {
+      setErrors({ purpose: purpose ? '300文字以内で入力してください。' : '作りたいことを入力してください。' });
+      return;
+    }
+    setBrief(previous => ({ ...previous, purpose }));
+    setErrors({});
+    setStage('details');
+  }
+
+  function returnToIdea() {
+    if (active.current) return;
+    setErrors({});
+    setStage('idea');
+  }
+
+  function resetCompletedDraft() {
+    setStage('idea');
+    if (!formEdited) {
+      setBrief({ ...emptyBrief });
+      setConfig({ ...initialConfig });
+      setFirstInstruction('');
+    }
+    setRevisionInstruction('');
+  }
+
   function create(event: FormEvent) {
     event.preventDefault();
     if (active.current) return;
@@ -218,6 +247,7 @@ export default function AiStudio({ onClose }: { onClose?: () => void }) {
       setListLoading(false);
       setItems(previous => previous.filter(item => item.id !== id));
       setSelected(null);
+      resetCompletedDraft();
       setDeleteConfirmation(false);
       setPage(0);
       setNotice('画面案を削除しました。');
@@ -227,6 +257,7 @@ export default function AiStudio({ onClose }: { onClose?: () => void }) {
   function newApplication() {
     if (active.current) return;
     setSelected(null);
+    resetCompletedDraft();
     setError('');
     setConflict(false);
     setNotice('');
@@ -252,7 +283,7 @@ export default function AiStudio({ onClose }: { onClose?: () => void }) {
 
   return <section className="ai-studio" aria-label="Geminiアプリ作成">
     <p className="ai-intro">目的から画面案を作り、確認して保存します。保存した画面案は後から再開できます。</p>
-    <p className="ai-service-note">入力内容はサーバーからGeminiへ送信されます。生成回数には上限があります。画面見本には架空のデータを使います。</p>
+    <p className="ai-service-note">画面案を生成すると、入力内容をGeminiへ送信します。生成回数には上限があります。画面見本には架空のデータを使います。</p>
     <div className="ai-studio-layout">
       <aside className="ai-saved" aria-label="保存した画面案">
         <div className="ai-saved-heading"><h3>保存した画面案</h3>
@@ -283,26 +314,38 @@ export default function AiStudio({ onClose }: { onClose?: () => void }) {
           revising: 'Geminiで修正案を生成中…', confirming: '確認内容を保存中…', deleting: '画面案を削除中…',
         }[busy]}</p>}
         {(busy === 'creating' || busy === 'revising') && <p className="field-hint">閉じた後もサーバー側の生成が完了する場合があります。再開時に一覧を確認してください。</p>}
-        {!selected ? <form className="registration-form ai-create" onSubmit={create} ref={form} noValidate>
-          <h3>作りたい画面を教えてください</h3>
+        {!selected && stage === 'idea' ? <form className="registration-form ai-idea" onSubmit={continueIdea} ref={form} noValidate>
+          <h3>どんなアプリを作りたいですか？</h3>
+          <p className="field-hint">作りたいものや、できるようにしたいことを教えてください。次の画面で詳しい内容を確認できます。</p>
+          <label htmlFor="ai-idea">作りたいアプリ・実現したいこと</label>
+          <textarea id="ai-idea" name="idea" rows={5} maxLength={300} autoComplete="off"
+            value={brief.purpose} onChange={event => { setBrief(previous => ({ ...previous, purpose: event.target.value })); setFormEdited(true); }}
+            placeholder="例: 社内イベントへの参加申込を受け付けて、参加人数をひと目で確認したい"
+            disabled={Boolean(busy)} aria-invalid={Boolean(errors.purpose)} aria-describedby={errors.purpose ? 'ai-idea-error' : 'ai-idea-hint'} />
+          {errors.purpose && <p className="ai-field-error" id="ai-idea-error">{errors.purpose}</p>}
+          <p className="field-hint" id="ai-idea-hint">300文字以内で入力してください。</p>
+          <button className="button primary full-width" type="submit" disabled={Boolean(busy)}>つづける</button>
+        </form> : !selected ? <form className="registration-form ai-create" onSubmit={create} ref={form} noValidate>
+          <button type="button" className="text-button ai-edit-idea" onClick={returnToIdea} disabled={Boolean(busy)}>作りたいことを編集</button>
+          <h3>画面の内容を確認してください</h3>
           <p className="field-hint">技術構成は標準のまま、目的と画面の内容を決めます。</p>
           <label htmlFor="ai-title">アプリ名</label>
-          <input id="ai-title" name="title" maxLength={64} autoComplete="off" value={config.title}
+          <input id="ai-title" name="title" maxLength={64} autoComplete="off" placeholder="例: イベント参加申込" value={config.title}
             onChange={event => changeConfig('title', event.target.value)} disabled={Boolean(busy)}
             aria-invalid={Boolean(errors.title)} aria-describedby={errors.title ? 'ai-title-error' : undefined} />
           {errors.title && <p className="ai-field-error" id="ai-title-error">{errors.title}</p>}
-          {briefField('purpose', '何をできるようにしたいですか？', '例: 毎月の予実を確認して、対応が必要な部門を見つけたい…')}
-          {briefField('audience', '誰が使いますか？', '例: 月次会議に参加する担当者…')}
-          {briefField('success', '画面見本で、どんなことを確かめたいですか？', '例: 会議で部門ごとの差を見つけやすいか確かめたい…')}
+          {briefField('purpose', '何をできるようにしたいですか？', '例: 社内イベントの参加人数を確認したい…')}
+          {briefField('audience', '誰が使いますか？', '例: 参加を申し込む社員と、イベントの担当者…')}
+          {briefField('success', '画面見本で、どんなことを確かめたいですか？', '例: 迷わず申し込めるか、参加人数を確認しやすいか確かめたい…')}
           <label htmlFor="ai-template">最初に試す画面</label>
           <select id="ai-template" name="template" value={config.template} disabled={Boolean(busy)} onChange={event => {
             const template = event.target.value as AiConfig['template'];
-            setConfig(previous => ({ ...previous, template, trend: template === 'management-dashboard',
+            setConfig(previous => ({ ...previous, template, trend: false,
               departments: false, cash_flow: false }));
             setFormEdited(true);
-          }}><option value="management-dashboard">経営管理ダッシュボード</option><option value="hello-web">案内用のWebページ</option></select>
+          }}><option value="hello-web">案内用のWebページ</option><option value="management-dashboard">経営管理ダッシュボード</option></select>
           <label htmlFor="ai-subtitle">画面の説明文</label>
-          <textarea id="ai-subtitle" name="subtitle" autoComplete="off" maxLength={160} rows={2}
+          <textarea id="ai-subtitle" name="subtitle" autoComplete="off" maxLength={160} rows={2} placeholder="例: 社内イベントの申込をまとめるページ"
             value={config.subtitle} onChange={event => changeConfig('subtitle', event.target.value)} disabled={Boolean(busy)} />
           {config.template === 'management-dashboard' && <fieldset className="ai-options"><legend>最初に入れたい表示</legend>
             {([['trend', '売上・利益の推移グラフ'], ['departments', '部門別の表'], ['cash_flow', 'キャッシュフローカード']] as const).map(([key, label]) =>
@@ -315,7 +358,7 @@ export default function AiStudio({ onClose }: { onClose?: () => void }) {
           <label htmlFor="ai-first-instruction">最初の追加要望（任意）</label>
           <textarea id="ai-first-instruction" name="initial_instruction" maxLength={1000} rows={2} autoComplete="off"
             value={firstInstruction} onChange={event => { setFirstInstruction(event.target.value); setFormEdited(true); }}
-            placeholder="例: 部門ごとに比較しやすいタイトルと説明文にして…" disabled={Boolean(busy)} />
+            placeholder="例: 初めて使う人にもわかりやすい説明文にして…" disabled={Boolean(busy)} />
           <p className="field-hint">目的・入力した内容をGeminiに送信し、対応する表示項目の範囲で画面案を作ります。</p>
           <button className="button primary full-width" type="submit" disabled={Boolean(busy)}>{busy === 'creating' ? 'Geminiで生成中…' : 'Geminiで画面案を生成'}</button>
         </form> : <>

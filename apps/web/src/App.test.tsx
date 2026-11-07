@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
+import { aiClient } from './ai-client';
 import { ApiError, api, sessionStore, SESSION_EXPIRED_EVENT } from './api';
 import type { Operation, Sandbox } from './api';
 import { loginFixture, mockSystem, operationFixture, sandboxFixture } from './test/fixtures';
@@ -368,4 +369,59 @@ it('does not offer real generation when the server has not configured Gemini', a
   render(<App />);
   await screen.findByText('まだアプリがありません');
   expect(screen.queryByRole('button', { name: 'Geminiでアプリを作る' })).not.toBeInTheDocument();
+});
+
+it.each([
+  ['作りたいアプリ・実現したいこと', 'abcde', false],
+  ['アプリ名', 'abcde', true],
+  ['何をできるようにしたいですか？', 'abcde', true],
+] as const)('keeps Gemini %s focus, caret and typed value across two workspace polls', async (label, initial, advanced) => {
+  await import('./AiStudio');
+  vi.spyOn(aiClient, 'list').mockResolvedValue({ items: [] });
+  vi.mocked(api.system).mockImplementation(async () => ({ ...mockSystem, ai_enabled: true, ai_model: 'gemini-3.5-flash-lite' }));
+  vi.useFakeTimers();
+  let unmount: (() => void) | undefined;
+  try {
+    ({ unmount } = render(<App />));
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    const opener = screen.getByRole('button', { name: 'Geminiでアプリを作る' });
+    opener.focus();
+    fireEvent.click(opener);
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    const dialog = within(screen.getByRole('dialog', { name: 'Geminiでアプリを作成' }));
+    if (advanced) {
+      fireEvent.change(dialog.getByLabelText('作りたいアプリ・実現したいこと'), { target: { value: 'イベントの案内を作りたい' } });
+      fireEvent.click(dialog.getByRole('button', { name: 'つづける' }));
+    }
+    const input = dialog.getByLabelText<HTMLInputElement | HTMLTextAreaElement>(label);
+    input.focus();
+    fireEvent.change(input, { target: { value: '' } });
+    for (let length = 1; length <= initial.length; length++) {
+      fireEvent.change(input, { target: { value: initial.slice(0, length) } });
+      await act(async () => { await vi.advanceTimersByTimeAsync(40); });
+    }
+    input.setSelectionRange(2, 2);
+    expect(input).toHaveFocus();
+    expect(input.selectionStart).toBe(2);
+    const observations = vi.mocked(api.list).mock.calls.length;
+    await act(async () => { await vi.advanceTimersByTimeAsync(1800); });
+    expect(vi.mocked(api.list).mock.calls.length).toBeGreaterThanOrEqual(observations + 1);
+    expect(input).toHaveFocus();
+    expect(input.selectionStart).toBe(2);
+    expect(input.selectionEnd).toBe(2);
+    expect(input).toHaveValue(initial);
+    fireEvent.change(input, { target: { value: 'abXcde' } });
+    input.setSelectionRange(3, 3);
+    expect(input).toHaveValue('abXcde');
+    expect(input.selectionStart).toBe(3);
+    await act(async () => { await vi.advanceTimersByTimeAsync(1800); });
+    expect(vi.mocked(api.list).mock.calls.length).toBeGreaterThanOrEqual(observations + 2);
+    expect(input).toHaveFocus();
+    expect(input.selectionStart).toBe(3);
+    expect(input.selectionEnd).toBe(3);
+    expect(input).toHaveValue('abXcde');
+  } finally {
+    unmount?.();
+    vi.useRealTimers();
+  }
 });

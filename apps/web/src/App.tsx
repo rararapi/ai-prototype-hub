@@ -323,6 +323,7 @@ function Workspace({ session, onLogout }: { session: LoginSession; onLogout: () 
   const [shareTarget, setShareTarget] = useState<Sandbox | null>(null);
   const [previewTarget, setPreviewTarget] = useState<string | null>(null);
   const closePreview = useCallback(() => setPreviewTarget(null), []);
+  const closeAiStudio = useCallback(() => setShowAiStudio(false), []);
   const lifetime = useRef(new AbortController());
   const selectedId = useRef<string | null>(null);
   const activeOperationId = useRef<string | null>(null);
@@ -547,7 +548,7 @@ function Workspace({ session, onLogout }: { session: LoginSession; onLogout: () 
     {protectedPreview && selected && previewTarget === selected.id && <Modal title={selected.name} onClose={closePreview} wide>
       <GooglePreview key={protectedPreview} url={protectedPreview} token={session.token} title={selected.name} />
     </Modal>}
-    {showAiStudio && AiStudio && <Modal title="Geminiでアプリを作成" onClose={() => setShowAiStudio(false)} wide><Suspense fallback={<p role="status">作成画面を読み込み中…</p>}><AiStudio onClose={() => setShowAiStudio(false)} /></Suspense></Modal>}
+    {showAiStudio && AiStudio && <Modal title="Geminiでアプリを作成" onClose={closeAiStudio} wide><Suspense fallback={<p role="status">作成画面を読み込み中…</p>}><AiStudio onClose={closeAiStudio} /></Suspense></Modal>}
     {showAiCreate && DemoCreation && <Modal title="AIでアプリを作成" onClose={closeAiCreate}><Suspense fallback={<p role="status">テンプレートを準備中…</p>}><DemoCreation busy={busy} onCreate={(name, template, ttl, instruction, plan) => { void create(name, template, ttl, instruction, plan); }} /></Suspense>{actionError && <p role="alert" className="form-error">{actionError.message}</p>}</Modal>}
     {showCreate && <Modal title="サンプルアプリを登録" onClose={closeCreate}><Registration templates={templates} busy={busy} onCreate={(name, template, ttl) => { void create(name, template, ttl); }} />{actionError && <p role="alert" className="form-error">{actionError.message}</p>}</Modal>}
     {deleteTarget && <Modal title="アプリを削除" onClose={closeDelete}><p className="delete-copy"><strong>「{deleteTarget.name}」</strong>を削除しますか？</p><p className="muted">このアプリの実行リソースを除去します。他のアプリには影響しません。管理上の削除記録は保持します。</p><div className="modal-actions"><button className="button secondary" onClick={closeDelete} disabled={busy}>キャンセル</button><button className="button danger" onClick={() => { void act(deleteTarget, 'delete'); }} disabled={busy}>{busy ? '削除要求を送信中…' : '削除する'}</button></div>{actionError && <p role="alert" className="form-error">{actionError.message}</p>}</Modal>}
